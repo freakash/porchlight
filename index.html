@@ -359,46 +359,6 @@
   </div>
 
   <div class="grid">
-    <section class="panel" id="verdictPanel">
-      <h2 data-i18n="ui_resultHeader">Result</h2>
-      <div class="verdict-head">
-        <div class="tier-big">
-          <span class="tier-icon" id="tierIcon"></span>
-          <div class="tier-pill" id="tierPill"><span class="dot"></span><span id="tierLabel">—</span></div>
-        </div>
-        <div class="score-mono" id="scoreLabel">risk score —/100</div>
-      </div>
-      <div class="meter">
-        <div class="meter-track"></div>
-        <div class="meter-marker" id="meterMarker" style="left:0%"></div>
-      </div>
-      <div class="meter-labels"><span data-i18n="meter_safe">Safe</span><span data-i18n="meter_caution">Use caution</span><span data-i18n="meter_danger">Likely scam</span></div>
-      <div class="confidence-note" id="confidenceNote"></div>
-
-      <div id="nextStepsWrap"></div>
-
-      <div class="plain-lang" id="plainLang"></div>
-      <div class="speak-row">
-        <button type="button" class="speak-btn" id="readResultBtn" hidden>🔊 <span data-i18n="ui_readResultBtn">Read result aloud</span></button>
-        <button type="button" class="speak-btn" id="readMsgBtn" hidden>🔊 <span data-i18n="ui_readMsgBtn">Read message aloud</span></button>
-      </div>
-
-      <div class="msg-preview" id="msgPreview"></div>
-
-      <h2 data-i18n="ui_whyHeader">Why we flagged this</h2>
-      <ul class="why-list" id="whyList"></ul>
-
-      <div id="contactCardWrap"></div>
-
-      <div class="feedback-row" id="feedbackRow">
-        <span class="q" data-i18n="ui_fbQuestion">Did we get this right?</span>
-        <button class="fb-btn" data-fb="correct" type="button" data-i18n="ui_fbCorrect">Looks right</button>
-        <button class="fb-btn" id="fbSafeBtn" data-fb="safe" type="button" data-i18n="ui_fbSafe">Actually safe</button>
-        <button class="fb-btn" data-fb="risky" type="button" data-i18n="ui_fbRisky">Actually risky</button>
-        <span class="fb-note" id="fbNote"></span>
-      </div>
-    </section>
-
     <section class="panel">
       <h2 data-i18n="ui_checkHeader">Check a message</h2>
 
@@ -416,6 +376,7 @@
       <p class="hint" id="micNote"></p>
       <p class="hint" id="screenshotNote"></p>
       <p class="hint" id="translateNote"></p>
+      <div class="msg-preview" id="translatedBox" hidden></div>
 
       <label class="field-label">Try an example</label>
       <div class="chiprow" id="exampleChips"></div>
@@ -478,6 +439,46 @@
           <span class="hint" id="deleteAllNote" style="margin:0;"></span>
           <button type="button" class="manage-link danger-link" id="deleteAllBtn">Delete all Porchlight data from this device</button>
         </div>
+      </div>
+    </section>
+
+    <section class="panel" id="verdictPanel">
+      <h2 data-i18n="ui_resultHeader">Result</h2>
+      <div class="verdict-head">
+        <div class="tier-big">
+          <span class="tier-icon" id="tierIcon"></span>
+          <div class="tier-pill" id="tierPill"><span class="dot"></span><span id="tierLabel">—</span></div>
+        </div>
+        <div class="score-mono" id="scoreLabel">risk score —/100</div>
+      </div>
+      <div class="meter">
+        <div class="meter-track"></div>
+        <div class="meter-marker" id="meterMarker" style="left:0%"></div>
+      </div>
+      <div class="meter-labels"><span data-i18n="meter_safe">Safe</span><span data-i18n="meter_caution">Use caution</span><span data-i18n="meter_danger">Likely scam</span></div>
+      <div class="confidence-note" id="confidenceNote"></div>
+
+      <div id="nextStepsWrap"></div>
+
+      <div class="plain-lang" id="plainLang"></div>
+      <div class="speak-row">
+        <button type="button" class="speak-btn" id="readResultBtn" hidden>🔊 <span data-i18n="ui_readResultBtn">Read result aloud</span></button>
+        <button type="button" class="speak-btn" id="readMsgBtn" hidden>🔊 <span data-i18n="ui_readMsgBtn">Read message aloud</span></button>
+      </div>
+
+      <div class="msg-preview" id="msgPreview"></div>
+
+      <h2 data-i18n="ui_whyHeader">Why we flagged this</h2>
+      <ul class="why-list" id="whyList"></ul>
+
+      <div id="contactCardWrap"></div>
+
+      <div class="feedback-row" id="feedbackRow">
+        <span class="q" data-i18n="ui_fbQuestion">Did we get this right?</span>
+        <button class="fb-btn" data-fb="correct" type="button" data-i18n="ui_fbCorrect">Looks right</button>
+        <button class="fb-btn" id="fbSafeBtn" data-fb="safe" type="button" data-i18n="ui_fbSafe">Actually safe</button>
+        <button class="fb-btn" data-fb="risky" type="button" data-i18n="ui_fbRisky">Actually risky</button>
+        <span class="fb-note" id="fbNote"></span>
       </div>
     </section>
   </div>
@@ -606,11 +607,14 @@
       ui_msgLabel:"Paste the text, email, or invoice wording", ui_msgPlaceholder:"Paste a suspicious text or email here...",
       ui_analyzeBtn:"Analyze this message",
       ui_fbQuestion:"Did we get this right?", ui_fbCorrect:"Looks right", ui_fbSafe:"Actually safe", ui_fbRisky:"Actually risky",
-      ui_translateBtn:"Copy message to translate", ui_translateNote:"Copied — paste it into Google Translate, or any translator app you trust, to read it in your language.",
+      ui_translateBtn:"Translate this message", ui_translateNote:"Copied — paste it into Google Translate, or any translator app you trust, to read it in your language.",
+      ui_translateLoading:"Translating…", ui_translateDone:"Translated below.", ui_translateError:"Couldn't translate that — try again in a moment.",
+      ui_translatePrivacyNote:"This sends the message text to an outside translation service — unlike the rest of Porchlight, this isn't kept on your device.",
       ui_readInLang:"Read this message in your language",
       ui_readResultBtn:"Read result aloud", ui_readMsgBtn:"Read message aloud", ui_stopReading:"Stop reading",
       ui_waitSeconds:"Wait {n}s before confirming...", ui_riskScore:"risk score {n}/100",
       ui_micBtn:"Speak instead of typing", ui_micListening:"Listening… tap again to stop",
+      ui_micTranscribing:"Transcribing…", ui_micError:"Couldn't transcribe that — try again, or type it instead.",
       ui_micPrivacyNote:"Your browser may send audio to an outside service to convert it to text — unlike the read-aloud feature, this isn't guaranteed to stay on your device.",
       ui_screenshotBtn:"Upload a screenshot",
       ui_screenshotLoading:"Reading text from the image…",
@@ -1988,56 +1992,145 @@
     setRegion(this.value);
   });
 
+  /* ---------------- live translation (via a Cloudflare Worker proxy) ----------------
+     TRANSLATE_API_URL is left blank until a Worker is deployed (see worker.js in the
+     repo). Blank = feature quietly falls back to the old "copy to clipboard, paste
+     into your own translator" behavior, so the page never ships broken. Once set,
+     the message text is sent off-device to that Worker (which forwards it to
+     OpenAI) — the one deliberate exception to "nothing leaves your browser",
+     disclosed via ui_translatePrivacyNote below. */
+  var TRANSLATE_API_URL = "https://porchlight-worker.akash-mithun2022.workers.dev/";
+
   document.getElementById("translateMsgBtn").addEventListener("click", function(){
     var msg = document.getElementById("msgInput").value;
     var note = document.getElementById("translateNote");
+    var box = document.getElementById("translatedBox");
     if(!msg.trim()){ note.textContent = ""; return; }
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(msg).then(function(){
-        note.textContent = t("ui_translateNote");
-      }).catch(function(){
-        note.textContent = "";
-      });
+
+    if(!TRANSLATE_API_URL){
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(msg).then(function(){
+          note.textContent = t("ui_translateNote");
+        }).catch(function(){
+          note.textContent = "";
+        });
+      }
+      return;
     }
+
+    box.hidden = true;
+    note.textContent = t("ui_translateLoading") + " " + t("ui_translatePrivacyNote");
+    fetch(TRANSLATE_API_URL, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({text: msg, targetLang: currentLang})
+    }).then(function(r){
+      if(!r.ok) throw new Error("bad response");
+      return r.json();
+    }).then(function(data){
+      if(data.translation){
+        box.textContent = data.translation;
+        box.hidden = false;
+        note.textContent = t("ui_translateDone");
+      } else {
+        note.textContent = t("ui_translateError");
+      }
+    }).catch(function(){
+      note.textContent = t("ui_translateError");
+    });
   });
 
-  /* ---------------- voice input (Web Speech API) ----------------
-     Unlike read-aloud (speechSynthesis, verified on-device), most browsers'
-     SpeechRecognition implementation sends audio to an external service for
-     transcription — so this carries a disclosed privacy caveat (ui_micPrivacyNote)
-     that read-aloud does not need. Feature-detected and hidden if unsupported. */
-  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  /* ---------------- voice input ----------------
+     Two engines, same button. If TRANSCRIBE_API_URL is set (the same Cloudflare
+     Worker used for translation, at its /transcribe route), voice input records
+     audio with MediaRecorder and sends it to OpenAI's Whisper model for far more
+     accurate transcription than any browser's built-in engine. If it's blank,
+     falls back to the browser's native Web Speech API (SpeechRecognition) —
+     lower quality, but works with zero setup. Either way, audio leaves the
+     device for transcription, so both paths show ui_micPrivacyNote. */
+  var TRANSCRIBE_API_URL = "https://porchlight-worker.akash-mithun2022.workers.dev/transcribe";
+
   var micBtn = document.getElementById("micBtn"), micNote = document.getElementById("micNote");
-  var micListening = false, recognizer = null;
-  if(SpeechRec){
+  var micListening = false;
+
+  if(TRANSCRIBE_API_URL){
+    var mediaRecorder = null, audioChunks = [];
     micBtn.hidden = false;
-    recognizer = new SpeechRec();
-    recognizer.lang = currentLang === "ta" ? "ta-IN" : "en-US";
-    recognizer.interimResults = false;
-    recognizer.maxAlternatives = 1;
-    recognizer.addEventListener("result", function(e){
-      var transcript = e.results[e.results.length-1][0].transcript;
-      var input = document.getElementById("msgInput");
-      input.value = (input.value.trim() ? input.value.trim()+" " : "") + transcript;
-      runAnalysis();
-    });
-    recognizer.addEventListener("end", function(){
-      micListening = false;
-      micBtn.textContent = t("ui_micBtn");
-    });
-    recognizer.addEventListener("error", function(){
-      micListening = false;
-      micBtn.textContent = t("ui_micBtn");
-      micNote.textContent = t("ui_micPrivacyNote");
-    });
     micBtn.addEventListener("click", function(){
-      recognizer.lang = currentLang === "ta" ? "ta-IN" : "en-US";
-      if(micListening){ recognizer.stop(); return; }
-      micListening = true;
-      micBtn.textContent = t("ui_micListening");
-      micNote.textContent = t("ui_micPrivacyNote");
-      try{ recognizer.start(); }catch(e){ micListening = false; micBtn.textContent = t("ui_micBtn"); }
+      if(micListening){
+        if(mediaRecorder) mediaRecorder.stop();
+        return;
+      }
+      navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+        micListening = true;
+        micBtn.textContent = t("ui_micListening");
+        micNote.textContent = t("ui_micPrivacyNote");
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.addEventListener("dataavailable", function(e){ audioChunks.push(e.data); });
+        mediaRecorder.addEventListener("stop", function(){
+          stream.getTracks().forEach(function(tr){ tr.stop(); });
+          micListening = false;
+          micBtn.textContent = t("ui_micBtn");
+          micNote.textContent = t("ui_micTranscribing");
+          var blob = new Blob(audioChunks, {type:"audio/webm"});
+          var form = new FormData();
+          form.append("audio", blob, "speech.webm");
+          form.append("lang", currentLang);
+          fetch(TRANSCRIBE_API_URL, {method:"POST", body:form}).then(function(r){
+            if(!r.ok) throw new Error("bad response");
+            return r.json();
+          }).then(function(data){
+            if(data.text){
+              var input = document.getElementById("msgInput");
+              input.value = (input.value.trim() ? input.value.trim()+" " : "") + data.text;
+              micNote.textContent = t("ui_micPrivacyNote");
+              runAnalysis();
+            } else {
+              micNote.textContent = t("ui_micError");
+            }
+          }).catch(function(){
+            micNote.textContent = t("ui_micError");
+          });
+        });
+        mediaRecorder.start();
+      }).catch(function(){
+        micNote.textContent = t("ui_micError");
+      });
     });
+  } else {
+    var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    var recognizer = null;
+    if(SpeechRec){
+      micBtn.hidden = false;
+      recognizer = new SpeechRec();
+      recognizer.lang = currentLang === "ta" ? "ta-IN" : "en-US";
+      recognizer.interimResults = false;
+      recognizer.maxAlternatives = 1;
+      recognizer.addEventListener("result", function(e){
+        var transcript = e.results[e.results.length-1][0].transcript;
+        var input = document.getElementById("msgInput");
+        input.value = (input.value.trim() ? input.value.trim()+" " : "") + transcript;
+        runAnalysis();
+      });
+      recognizer.addEventListener("end", function(){
+        micListening = false;
+        micBtn.textContent = t("ui_micBtn");
+      });
+      recognizer.addEventListener("error", function(){
+        micListening = false;
+        micBtn.textContent = t("ui_micBtn");
+        micNote.textContent = t("ui_micPrivacyNote");
+      });
+      micBtn.addEventListener("click", function(){
+        recognizer.lang = currentLang === "ta" ? "ta-IN" : "en-US";
+        if(micListening){ recognizer.stop(); return; }
+        micListening = true;
+        micBtn.textContent = t("ui_micListening");
+        micNote.textContent = t("ui_micPrivacyNote");
+        try{ recognizer.start(); }catch(e){ micListening = false; micBtn.textContent = t("ui_micBtn"); }
+      });
+    }
   }
 
   /* ---------------- screenshot upload (client-side OCR via Tesseract.js) ----------------
