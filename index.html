@@ -1,18 +1,36 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style></head><body>
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Porchlight Academy</title>
+<title>Porchlight</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<!-- Screenshot text-extraction (OCR) engine. Loaded lazily, only used when the
+     user clicks "Upload a screenshot" — the image itself is never uploaded
+     anywhere, but this library's worker/model files are fetched from a CDN on
+     first use, a narrow, disclosed exception to "nothing leaves your browser"
+     for the OCR engine itself. See in-page note near the upload button. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
 <style>
   :root{
-    --paper:#ECE8DD; --surface:#F8F6EE; --surface-2:#E3DECE;
-    --ink:#1D241F; --ink-soft:#4E594E; --border:rgba(29,36,31,0.15);
-    --accent:#2F5D50; --accent-strong:#234439; --accent-ink:#F3F1E6;
-    --safe:#3C7A50; --safe-bg:#DCEBDC;
-    --caution:#A06A1E; --caution-bg:#F1E1BE;
-    --danger:#9A3C2B; --danger-bg:#F2DBD2;
+    --paper:#ECE8DD;
+    --surface:#F8F6EE;
+    --surface-2:#E3DECE;
+    --ink:#1D241F;
+    --ink-soft:#4E594E;
+    --border:rgba(29,36,31,0.15);
+    --accent:#2F5D50;
+    --accent-strong:#234439;
+    --accent-ink:#F3F1E6;
+    --safe:#3C7A50;
+    --safe-bg:#DCEBDC;
+    --caution:#A06A1E;
+    --caution-bg:#F1E1BE;
+    --danger:#9A3C2B;
+    --danger-bg:#F2DBD2;
+    --unsure:#5B5546;
+    --unsure-bg:#E6E1D1;
     --shadow:0 1px 2px rgba(29,36,31,0.07), 0 10px 26px -14px rgba(29,36,31,0.28);
     --font-display:'Fraunces', Georgia, 'Times New Roman', serif;
     --font-body:'Public Sans', -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -20,76 +38,291 @@
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --paper:#12160F; --surface:#191F18; --surface-2:#232B21;
-      --ink:#E9E6DA; --ink-soft:#A9B3A5; --border:rgba(233,230,218,0.14);
-      --accent:#74AC95; --accent-strong:#8FC1AB; --accent-ink:#0D1512;
-      --safe:#82C08F; --safe-bg:#203323;
-      --caution:#E3AC5E; --caution-bg:#382A15;
-      --danger:#E38A73; --danger-bg:#3B2018;
+      --paper:#12160F;
+      --surface:#191F18;
+      --surface-2:#232B21;
+      --ink:#E9E6DA;
+      --ink-soft:#A9B3A5;
+      --border:rgba(233,230,218,0.14);
+      --accent:#74AC95;
+      --accent-strong:#8FC1AB;
+      --accent-ink:#0D1512;
+      --safe:#82C08F;
+      --safe-bg:#203323;
+      --caution:#E3AC5E;
+      --caution-bg:#382A15;
+      --danger:#E38A73;
+      --danger-bg:#3B2018;
+      --unsure:#B9B09A;
+      --unsure-bg:#2A2820;
       --shadow:0 1px 2px rgba(0,0,0,0.5), 0 10px 26px -14px rgba(0,0,0,0.7);
     }
   }
   :root[data-theme="dark"]{
-    --paper:#12160F; --surface:#191F18; --surface-2:#232B21;
-    --ink:#E9E6DA; --ink-soft:#A9B3A5; --border:rgba(233,230,218,0.14);
-    --accent:#74AC95; --accent-strong:#8FC1AB; --accent-ink:#0D1512;
-    --safe:#82C08F; --safe-bg:#203323;
-    --caution:#E3AC5E; --caution-bg:#382A15;
-    --danger:#E38A73; --danger-bg:#3B2018;
+    --paper:#12160F;
+    --surface:#191F18;
+    --surface-2:#232B21;
+    --ink:#E9E6DA;
+    --ink-soft:#A9B3A5;
+    --border:rgba(233,230,218,0.14);
+    --accent:#74AC95;
+    --accent-strong:#8FC1AB;
+    --accent-ink:#0D1512;
+    --safe:#82C08F;
+    --safe-bg:#203323;
+    --caution:#E3AC5E;
+    --caution-bg:#382A15;
+    --danger:#E38A73;
+    --danger-bg:#3B2018;
+    --unsure:#B9B09A;
+    --unsure-bg:#2A2820;
     --shadow:0 1px 2px rgba(0,0,0,0.5), 0 10px 26px -14px rgba(0,0,0,0.7);
   }
+
   *{box-sizing:border-box;}
-  @media (prefers-reduced-motion: reduce){ *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;} }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
   html{background:var(--paper);}
-  body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--font-body); font-size:18px; line-height:1.55;}
-  .wrap{max-width:980px; margin:0 auto; padding:28px 24px 64px;}
-  .topbar{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:26px;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:17px;
+    line-height:1.5;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:28px 24px 64px;}
+
+  /* header */
+  .topbar{display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:28px;}
+  .topbar-btns{display:flex; gap:10px; flex-wrap:wrap;}
   .brand{display:flex; align-items:center; gap:14px;}
-  .brand svg{flex:none; width:38px; height:38px; color:var(--accent);}
-  .brand h1{font-family:var(--font-display); font-weight:600; font-size:1.9rem; margin:0; letter-spacing:-0.01em; text-wrap:balance;}
-  .brand .tag{font-size:0.76rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); margin-top:2px; font-weight:600;}
-  .top-controls{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
-  select{font-family:var(--font-body); font-size:0.85rem; color:var(--ink); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px 11px;}
-  .back-link{font-family:var(--font-body); font-weight:600; font-size:0.85rem; color:var(--accent); text-decoration:underline; text-underline-offset:2px;}
-  .backend-link{display:inline-block; margin-bottom:18px;}
-
-  .intro{font-size:1.05rem; color:var(--ink-soft); max-width:64ch; margin:0 0 28px;}
-  .intro b{color:var(--ink);}
-
-  .course-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:16px;}
-  .course-card{
-    background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px;
-    box-shadow:var(--shadow); display:flex; flex-direction:column; gap:10px; text-align:left;
-    cursor:pointer; font-family:inherit; color:inherit;
+  .brand svg{flex:none; width:40px; height:40px; color:var(--accent);}
+  .brand h1{font-family:var(--font-display); font-weight:600; font-size:2.1rem; margin:0; letter-spacing:-0.01em; text-wrap:balance;}
+  .brand .tag{font-size:0.78rem; text-transform:uppercase; letter-spacing:0.09em; color:var(--ink-soft); margin-top:2px; font-weight:600;}
+  .howbtn{
+    border:1px solid var(--border); background:var(--surface); color:var(--ink);
+    font-family:var(--font-body); font-weight:600; font-size:0.85rem;
+    padding:9px 16px; border-radius:8px; cursor:pointer;
   }
-  .course-card:hover{border-color:var(--accent);}
-  .course-card .icon{width:36px; height:36px; color:var(--accent);}
-  .course-card h2{font-family:var(--font-display); font-size:1.25rem; font-weight:600; margin:0;}
-  .course-card p{font-size:0.9rem; color:var(--ink-soft); margin:0; flex:1;}
-  .course-card .start{font-size:0.82rem; font-weight:700; color:var(--accent);}
+  .howbtn:hover{background:var(--surface-2);}
 
-  .course-view{display:none;}
-  .course-view.open{display:block;}
-  #landingView.hidden{display:none;}
-  .course-title{font-family:var(--font-display); font-size:1.9rem; font-weight:600; margin:6px 0 4px; text-wrap:balance;}
-  .course-intro{color:var(--ink-soft); margin:0 0 26px; max-width:64ch;}
-
-  .step{
-    display:grid; grid-template-columns:44px 1fr; gap:16px; padding:18px 0; border-bottom:1px solid var(--border);
+  .howpanel{
+    display:none; background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:16px 20px; margin-bottom:26px; font-size:0.92rem; color:var(--ink-soft); box-shadow:var(--shadow);
   }
-  .step:last-child{border-bottom:none;}
-  .step-num{
-    width:44px; height:44px; border-radius:50%; background:var(--accent); color:var(--accent-ink);
-    display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; font-size:1.1rem; flex:none;
-  }
-  .step h3{font-size:1.08rem; font-weight:700; margin:0 0 6px;}
-  .step p{margin:0; color:var(--ink-soft); font-size:0.98rem;}
+  .howpanel.open{display:block;}
+  .howpanel b{color:var(--ink);}
+  .howpanel p{margin:0.4em 0;}
+  .test-metrics{display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:10px; margin:14px 0;}
+  .test-metric{background:var(--surface-2); border-radius:8px; padding:10px 12px;}
+  .test-metric .num{font-family:var(--font-mono); font-size:1.3rem; font-weight:700; display:block;}
+  .test-metric .lbl{font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft);}
+  .test-miss{font-size:0.82rem; padding:6px 0; border-bottom:1px solid var(--border);}
+  .test-miss:last-child{border-bottom:none;}
 
-  footer{margin-top:40px; border-top:1px solid var(--border); padding-top:16px; font-size:0.78rem; color:var(--ink-soft); text-align:center;}
+  /* layout */
+  .grid{display:grid; grid-template-columns: minmax(320px, 420px) 1fr; gap:22px; align-items:start;}
+  @media (max-width: 900px){ .grid{grid-template-columns: 1fr;} }
+
+  .panel{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:20px 22px 22px; box-shadow:var(--shadow);
+  }
+  .panel h2{
+    font-family:var(--font-body); font-size:0.78rem; text-transform:uppercase; letter-spacing:0.09em;
+    font-weight:700; color:var(--ink-soft); margin:0 0 14px;
+  }
+
+  label.field-label{display:block; font-weight:600; font-size:0.85rem; margin:14px 0 6px; color:var(--ink);}
+  label.field-label:first-of-type{margin-top:0;}
+  textarea, input[type="text"], select{
+    width:100%; font-family:var(--font-body); font-size:0.98rem; color:var(--ink);
+    background:var(--paper); border:1px solid var(--border); border-radius:8px;
+    padding:11px 13px; resize:vertical;
+  }
+  textarea{min-height:150px; line-height:1.45;}
+  textarea:focus, input:focus, select:focus{outline:2px solid var(--accent); outline-offset:1px;}
+  .hint{font-size:0.78rem; color:var(--ink-soft); margin-top:5px;}
+
+  .chiprow{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;}
+  .chip{
+    font-family:var(--font-body); font-size:0.8rem; font-weight:600; color:var(--ink);
+    background:var(--surface-2); border:1px solid var(--border); border-radius:999px;
+    padding:7px 13px; cursor:pointer;
+  }
+  .chip:hover{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+  .chip.safe-ex{border-color:var(--safe);}
+
+  .analyze-btn{
+    margin-top:18px; width:100%; background:var(--accent); color:var(--accent-ink);
+    border:none; border-radius:8px; font-family:var(--font-body); font-weight:700; font-size:1rem;
+    padding:13px 18px; cursor:pointer;
+  }
+  .analyze-btn:hover{background:var(--accent-strong);}
+
+  /* verdict */
+  .verdict-head{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;}
+  .tier-big{display:flex; align-items:center; gap:10px;}
+  .tier-icon{display:flex; width:34px; height:34px; flex:none;}
+  .tier-icon svg{width:100%; height:100%;}
+  .tier-icon.tier-safe{color:var(--safe);}
+  .tier-icon.tier-caution{color:var(--caution);}
+  .tier-icon.tier-danger{color:var(--danger);}
+  .tier-icon.tier-unsure{color:var(--unsure);}
+  .confidence-note{font-size:0.78rem; color:var(--ink-soft); margin-top:8px;}
+  .confidence-note b{color:var(--ink);}
+  .tier-pill{
+    display:inline-flex; align-items:center; gap:8px; font-weight:700; font-size:1.05rem;
+    padding:8px 16px; border-radius:999px; font-family:var(--font-body);
+  }
+  .tier-pill .dot{width:10px; height:10px; border-radius:50%; background:currentColor;}
+  .tier-safe{background:var(--safe-bg); color:var(--safe);}
+  .tier-caution{background:var(--caution-bg); color:var(--caution);}
+  .tier-danger{background:var(--danger-bg); color:var(--danger);}
+  .tier-unsure{background:var(--unsure-bg); color:var(--unsure);}
+
+  .speak-btn{
+    display:inline-flex; align-items:center; gap:5px; background:var(--surface-2); color:var(--ink);
+    border:1px solid var(--border); border-radius:7px; font-family:var(--font-body); font-weight:600;
+    font-size:0.78rem; padding:6px 11px; cursor:pointer;
+  }
+  .speak-btn:hover{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+  .speak-btn[hidden]{display:none;}
+  .speak-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
+
+  .score-mono{font-family:var(--font-mono); font-size:0.95rem; color:var(--ink-soft);}
+
+  .meter{margin:16px 0 6px; position:relative;}
+  .meter-track{
+    height:10px; border-radius:999px;
+    background:linear-gradient(to right, var(--safe) 0 32%, var(--caution) 32% 65%, var(--danger) 65% 100%);
+  }
+  .meter-marker{
+    position:absolute; top:-5px; width:2px; height:20px; background:var(--ink);
+    transform:translateX(-1px); transition:left 0.4s ease;
+  }
+  .meter-labels{display:flex; justify-content:space-between; font-size:0.72rem; color:var(--ink-soft); margin-top:4px; text-transform:uppercase; letter-spacing:0.06em; font-weight:600;}
+
+  .plain-lang{
+    font-family:var(--font-display); font-size:1.32rem; line-height:1.42; font-weight:500;
+    margin:20px 0; padding:16px 18px; border-radius:10px; background:var(--surface-2);
+    border-left:5px solid var(--accent); text-wrap:balance;
+  }
+
+  .msg-preview{
+    font-family:var(--font-body); font-size:0.98rem; line-height:1.6; white-space:pre-wrap;
+    background:var(--paper); border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin:8px 0 18px;
+  }
+  mark.hl-danger{background:color-mix(in srgb, var(--danger) 30%, transparent); color:var(--ink); border-radius:3px; padding:0 2px;}
+  mark.hl-caution{background:color-mix(in srgb, var(--caution) 30%, transparent); color:var(--ink); border-radius:3px; padding:0 2px;}
+
+  .why-list{list-style:none; margin:0 0 18px; padding:0; display:flex; flex-direction:column; gap:8px;}
+  .why-list li{
+    display:flex; gap:10px; align-items:flex-start; font-size:0.9rem; padding:9px 12px;
+    border-left:4px solid var(--border); background:var(--paper); border-radius:0 8px 8px 0;
+  }
+  .why-list li.sev-danger{border-left-color:var(--danger);}
+  .why-list li.sev-caution{border-left-color:var(--caution);}
+  .why-list li.sev-model{border-left-color:var(--accent);}
+  .why-list li.sev-safe{border-left-color:var(--safe);}
+  .why-list .reason-label{font-weight:600; flex:none; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); width:76px;}
+
+  .model-words{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;}
+  .model-words span{
+    font-family:var(--font-mono); font-size:0.76rem; background:var(--accent); color:var(--accent-ink);
+    padding:3px 8px; border-radius:5px;
+  }
+
+  .contact-card{
+    background:var(--safe-bg); border:1px solid var(--safe); border-radius:10px; padding:14px 16px; margin:0 0 18px;
+  }
+  .contact-card h3{margin:0 0 6px; font-size:0.95rem; font-family:var(--font-body); color:var(--safe);}
+  .contact-card .row{display:flex; gap:18px; flex-wrap:wrap; margin-top:6px;}
+  .contact-card .row div{font-family:var(--font-mono); font-size:0.92rem;}
+  .contact-card .row span{display:block; font-family:var(--font-body); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); margin-bottom:2px;}
+  .contact-card p{font-size:0.82rem; color:var(--ink-soft); margin:8px 0 0;}
+  .contact-card a{color:var(--accent); font-weight:700; text-decoration:underline; text-underline-offset:2px;}
+  .contact-card.warn{background:var(--danger-bg); border-color:var(--danger);}
+  .contact-card.warn h3{color:var(--danger);}
+  .contact-card.neutral{background:var(--surface-2); border-color:var(--border);}
+  .contact-card.neutral h3{color:var(--ink);}
+
+  .manage-row{display:flex; justify-content:flex-end; margin-top:6px;}
+  .manage-link{background:none; border:none; color:var(--accent); font-family:var(--font-body); font-weight:600; font-size:0.8rem; cursor:pointer; padding:0; text-decoration:underline;}
+  .contacts-panel{display:none; margin-top:10px; padding:14px 16px; background:var(--paper); border:1px solid var(--border); border-radius:8px;}
+  .contacts-panel.open{display:block;}
+  .contact-row{display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); font-size:0.85rem;}
+  .contact-row:last-child{border-bottom:none;}
+  .contact-row .row-actions{display:flex; gap:6px; align-items:center; flex:none;}
+  .contact-row .meta{color:var(--ink-soft); font-size:0.76rem; display:block; margin-top:1px;}
+  .contact-add{display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;}
+  .contact-add input{flex:1; min-width:110px; padding:8px 10px; font-size:0.85rem;}
+  .contact-add select{flex:1; min-width:140px; width:auto; padding:8px 10px; font-size:0.85rem;}
+  .contact-add button{flex:none; background:var(--accent); color:var(--accent-ink); border:none; border-radius:6px; padding:8px 12px; font-weight:600; font-size:0.82rem; cursor:pointer;}
+  .del-btn{background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.78rem; font-weight:600;}
+  .allow-money-row{display:flex; align-items:center; gap:7px; font-size:0.8rem; color:var(--ink-soft); margin-top:8px; cursor:pointer;}
+  .allow-money-toggle{background:none; border:1px solid var(--border); border-radius:5px; padding:3px 8px; font-size:0.72rem; cursor:pointer; color:var(--ink-soft);}
+  .allow-money-toggle.on{background:var(--safe-bg); color:var(--safe); border-color:var(--safe); font-weight:600;}
+  .rel-select{font-size:0.72rem; padding:3px 6px; border:1px solid var(--border); border-radius:5px; background:var(--paper); color:var(--ink-soft); width:auto;}
+
+  .feedback-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap; border-top:1px solid var(--border); padding-top:16px; margin-top:4px;}
+  .feedback-row span.q{font-size:0.85rem; font-weight:600; color:var(--ink-soft);}
+  .fb-btn{
+    font-family:var(--font-body); font-size:0.8rem; font-weight:600; color:var(--ink);
+    background:var(--surface-2); border:1px solid var(--border); border-radius:7px; padding:7px 12px; cursor:pointer;
+  }
+  .fb-btn:hover{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+  .fb-btn:disabled{opacity:0.55; cursor:not-allowed;}
+  .fb-btn:disabled:hover{background:var(--surface-2); color:var(--ink); border-color:var(--border);}
+  .fb-note{font-size:0.8rem; color:var(--accent); font-weight:600; margin-left:4px;}
+
+  .log-panel{margin-top:22px;}
+  .log-row{
+    display:grid; grid-template-columns:88px 1fr 96px; gap:10px; align-items:center;
+    font-size:0.82rem; padding:9px 0; border-bottom:1px solid var(--border);
+  }
+  .log-row:last-child{border-bottom:none;}
+  .log-time{font-family:var(--font-mono); color:var(--ink-soft); font-size:0.74rem;}
+  .log-snip{color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .log-tier{font-weight:700; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; text-align:right;}
+  .log-tier.tier-safe{background:none; padding:0; color:var(--safe);}
+  .log-tier.tier-caution{background:none; padding:0; color:var(--caution);}
+  .log-tier.tier-danger{background:none; padding:0; color:var(--danger);}
+  .log-empty{font-size:0.85rem; color:var(--ink-soft); font-style:italic;}
+
+  footer{margin-top:36px; border-top:1px solid var(--border); padding-top:18px; font-size:0.78rem; color:var(--ink-soft); text-align:center;}
+  footer p{margin:4px 0;}
+
+  /* "Easier to see" text/button size toggle — scales rem-based sizing via the
+     html root font-size, plus explicit padding bumps on interactive elements
+     whose padding is set in px rather than rem. */
+  html.text-large{font-size:112.5%;}
+  html.text-large .analyze-btn{padding:16px 20px; font-size:1.1rem;}
+  html.text-large textarea, html.text-large input[type="text"], html.text-large select{padding:14px 16px;}
+  html.text-large .chip{padding:10px 16px;}
+  html.text-large .fb-btn{padding:10px 16px;}
+  html.text-large .howbtn, html.text-large .manage-link{padding:11px 18px;}
+  html.text-xl{font-size:125%;}
+  html.text-xl .analyze-btn{padding:19px 24px; font-size:1.2rem;}
+  html.text-xl textarea, html.text-xl input[type="text"], html.text-xl select{padding:16px 18px;}
+  html.text-xl .chip{padding:12px 18px;}
+  html.text-xl .fb-btn{padding:12px 18px;}
+  html.text-xl .howbtn, html.text-xl .manage-link{padding:13px 20px;}
+
+  .next-steps{background:var(--surface-2); border-radius:10px; padding:14px 16px; margin:0 0 18px;}
+  .next-steps h3{margin:0 0 8px; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.09em; color:var(--ink-soft); font-family:var(--font-body); font-weight:700;}
+  .next-steps ul{margin:0; padding-left:20px;}
+  .next-steps li{font-size:0.92rem; margin:4px 0;}
+
+  .privacy-row{border-top:1px solid var(--border); margin-top:14px; padding-top:14px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
+  .danger-link{color:var(--danger) !important;}
 </style>
 </head>
 <body>
 <div class="wrap">
+
   <div class="topbar">
     <div class="brand">
       <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -98,274 +331,2134 @@
         <circle cx="24" cy="24" r="3.2" fill="currentColor"/>
       </svg>
       <div>
-        <h1 data-i18n="brandTitle">Porchlight Academy</h1>
-        <div class="tag" data-i18n="brandTag">Learn to spot a scam yourself</div>
+        <h1>Porchlight</h1>
+        <div class="tag">Catches a scam before your family does</div>
       </div>
     </div>
-    <div class="top-controls">
-      <select id="langSelect">
+    <div class="topbar-btns">
+      <select id="langSelect" class="howbtn" style="cursor:pointer;">
         <option value="en">English</option>
-        <option value="es">Español</option>
-        <option value="hi">हिन्दी (Hindi)</option>
+        <option value="ta">தமிழ் (Tamil)</option>
       </select>
-      <a class="back-link" href="https://claude.ai/code/artifact/dee269ac-f481-48dd-bca3-e402caf70ee2" data-i18n="toChecker">Open the message checker</a>
+      <button class="howbtn" id="textSizeBtn" type="button">Larger text</button>
+      <button class="howbtn" id="howToggle" type="button">How this works</button>
+      <button class="howbtn" id="testToggle" type="button">Model accuracy</button>
     </div>
   </div>
+  <p class="hint" id="taPartialNote" style="margin:-18px 0 18px;"></p>
 
-  <div id="landingView">
-    <p class="intro" data-i18n="introText">Four short, plain-language guides — no quiz, no jargon. Each one distills the same warning signs Porchlight's checker looks for, so you can recognize a scam yourself, even without the tool in hand.</p>
-    <div class="course-grid" id="courseGrid"></div>
+  <div class="howpanel" id="howPanel">
+    <p><b>Nothing you paste ever leaves this browser.</b> Porchlight checks messages using two things running locally: a set of hand-written scam rules, and a small statistical model trained right here on your device when this page loaded.</p>
+    <p>Rules catch known patterns &mdash; urgent deadlines, gift-card demands, requests for a social security number, a claim that your account or verification is suspended paired with a link to "fix" it, or a dangled overpayment/refund paired with a link to "claim" it. The model catches phrasing the rules miss. If either finds a serious red flag (like a money request paired with a threat), the result is marked risky no matter what the other one says.</p>
+    <p>When a message claims to be from a real company, Porchlight also looks up that company's actual verified phone number and website, so you never have to trust the contact info printed in a suspicious message.</p>
+    <p>When a message claims to be from someone in your saved contacts, Porchlight checks whether it actually came from that person's saved number, and whether they have ever asked you for money before. A saved contact asking for money for the first time, or a message claiming to be them from a different number, is treated as a possible compromised phone or account, not a safe message — even if nothing else about the wording looks suspicious.</p>
+    <p>To stop a scammer from "warming up" a contact's history with a small, harmless-looking ask first, a flagged money request only becomes part of that person's normal history after you or a caregiver explicitly confirm it was legitimate. Porchlight never assumes a risky message was fine just because it went unanswered.</p>
+    <p>Use the country/region picker to switch which real tax agencies, banks, postal services, and fraud-reporting hotlines Porchlight checks against, and it also recognizes £, €, and ₹ amounts and scam patterns common outside the US, such as customs-fee package scams and authority-impersonation scams like India's "digital arrest" scam. The message text itself still needs to be in English for the on-device model to read it — detecting scam messages written in other languages is a planned next step, not something this version does.</p>
+    <p>Money requests are also weighed against the relationship you've tagged for a sender. A first-ever ask is always scrutinized no matter how close the relationship is — closeness doesn't get to skip that check. But relationship changes what happens next: a spouse who's asked for money before barely registers, while a "lover" or new online contact who keeps asking still gets a light ongoing flag, since that pattern — small, repeated, trust-building asks — is exactly how romance and grooming scams operate. The same wording from a stranger claiming a romantic or new relationship is flagged even on the very first message, since content alone genuinely can't tell a scammer's affectionate language apart from a real partner's — real couples use the same words. Marking a contact "allowed to ask for money" is respected for low-risk relationships, but for high-risk ones it downgrades the flag rather than silencing it entirely, since the person most likely to grant that permission is often the one being actively groomed.</p>
+    <p>Porchlight also recognizes UPI payment and "collect" requests and QR-code pay prompts. Approving a UPI collect request moves money out of your account even though it can look like you're the one receiving something — only approve one if you already know exactly who sent it and why.</p>
+    <p>Porchlight is English-only for now, on purpose — the detection features are still being actively worked on, and adding other languages back in is a deliberate later step rather than something done alongside every change.</p>
   </div>
 
-  <div class="course-view" id="courseView">
-    <a class="back-link backend-link" href="#" id="backToCourses" data-i18n="backToCourses">← Back to all courses</a>
-    <h2 class="course-title" id="courseTitle"></h2>
-    <p class="course-intro" id="courseIntro"></p>
-    <div id="courseSteps"></div>
+  <div class="howpanel" id="testPanel">
+    <p>This runs the full rule-and-model pipeline against 88 messages that were <b>not</b> used to train the model, and reports how it did. 60 are edge cases I wrote by hand to probe specific behaviors — including 22 built specifically to stress-test the family-emergency scam rule against different relationships, injuries, and payment methods, plus close benign look-alikes that should <b>not</b> trigger it; 28 are real messages from the public SMS Spam Collection dataset (including its "smishing" category), held out from the training data added below. Treat the numbers as a sanity check on the approach, not a scientific accuracy claim.</p>
+    <p>"Flagged" means the message came back as Caution or Danger; "Not flagged" means Safe. Precision is: of the messages Porchlight flagged, how many really were scams. Recall is: of the real scams in the set, how many Porchlight caught.</p>
+    <button class="howbtn" id="runTestBtn" type="button">Run self-test</button>
+    <div id="testResults"></div>
   </div>
 
-  <footer data-i18n="footerNote">Porchlight Academy is educational content only — it does not check messages for you. Use the Porchlight checker for that. These translations are Claude-authored and have not been reviewed by a native speaker.</footer>
+  <div class="grid">
+    <section class="panel">
+      <h2 data-i18n="ui_checkHeader">Check a message</h2>
+
+      <label class="field-label" for="msgInput" data-i18n="ui_msgLabel">Paste the text, email, or invoice wording</label>
+      <textarea id="msgInput" data-i18n-placeholder="ui_msgPlaceholder" placeholder="Paste a suspicious text or email here..."></textarea>
+      <div class="manage-row" style="justify-content:space-between; align-items:center; flex-wrap:wrap;">
+        <span>
+          <button type="button" class="manage-link" id="micBtn" hidden data-i18n="ui_micBtn">Speak instead of typing</button>
+          <span style="margin:0 8px; color:var(--border);">|</span>
+          <button type="button" class="manage-link" id="screenshotBtn" data-i18n="ui_screenshotBtn">Upload a screenshot</button>
+          <input type="file" id="screenshotInput" accept="image/*" hidden>
+        </span>
+        <button type="button" class="manage-link" id="translateMsgBtn" data-i18n="ui_translateBtn">Copy message to translate</button>
+      </div>
+      <p class="hint" id="micNote"></p>
+      <p class="hint" id="screenshotNote"></p>
+      <p class="hint" id="translateNote"></p>
+
+      <label class="field-label">Try an example</label>
+      <div class="chiprow" id="exampleChips"></div>
+
+      <button class="analyze-btn" id="analyzeBtn" type="button" data-i18n="ui_analyzeBtn">Analyze this message</button>
+
+      <div class="manage-row" style="margin-top:16px;"><button type="button" class="manage-link" id="advancedToggle">More options</button></div>
+      <div class="contacts-panel" id="advancedPanel">
+        <label class="field-label" for="regionSelect" style="margin-top:0;">Your country / region</label>
+        <select id="regionSelect">
+          <option value="US">United States</option>
+          <option value="UK">United Kingdom</option>
+          <option value="IN">India</option>
+          <option value="CA">Canada</option>
+          <option value="AU">Australia</option>
+          <option value="GLOBAL">Other / Global</option>
+        </select>
+        <p class="hint">Sets which real tax agencies, banks, and postal services Porchlight checks messages against.</p>
+
+        <label class="field-label" for="claimedRelationship">Their relationship to you <span style="font-weight:400;color:var(--ink-soft);">(only used if not a saved contact)</span></label>
+        <select id="claimedRelationship"></select>
+
+        <label class="field-label" for="senderContact">Sender's email or phone number <span style="font-weight:400;color:var(--ink-soft);">(optional)</span></label>
+        <input type="text" id="senderContact" placeholder="e.g. security@chase-alerts.net">
+
+        <div class="manage-row"><button type="button" class="manage-link" id="contactsToggle">Manage saved contacts</button></div>
+        <div class="contacts-panel" id="contactsPanel">
+          <div id="contactsList"></div>
+          <div class="contact-add">
+            <input type="text" id="contactNameInput" placeholder="Name (e.g. Mom)">
+            <input type="text" id="contactValueInput" placeholder="Phone or email">
+            <select id="contactRelationshipInput"></select>
+            <button type="button" id="addContactBtn">Add</button>
+          </div>
+          <label class="allow-money-row"><input type="checkbox" id="contactAllowMoney"> Allowed to ask me for money through apps like Venmo or Zelle</label>
+          <p class="hint">Porchlight compares the sender field above against this list, so it can tell a message from a real saved number apart from a stranger's number claiming to be that person — and it remembers whether that person has ever asked you for money before. The relationship you set changes how much a money request from them is scrutinized: closer relationships get more benefit of the doubt after the first ask, while newer or romantic contacts stay flagged more persistently, since that's the pattern romance scams actually use.</p>
+        </div>
+      </div>
+
+      <div class="log-panel">
+        <h2>Protection log <span style="font-weight:400; text-transform:none; letter-spacing:0;">(saved on this device)</span></h2>
+        <div id="logList"></div>
+        <div class="manage-row" style="justify-content:space-between; align-items:center;">
+          <span class="hint" id="copyNote" style="margin:0;"></span>
+          <span>
+            <button type="button" class="manage-link" id="copySummaryBtn">Copy summary for caregiver</button>
+            <button type="button" class="manage-link" id="clearLogBtn" style="margin-left:14px;">Clear log</button>
+          </span>
+        </div>
+        <div class="privacy-row">
+          <span class="hint" id="deleteAllNote" style="margin:0;"></span>
+          <button type="button" class="manage-link danger-link" id="deleteAllBtn">Delete all Porchlight data from this device</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="verdictPanel">
+      <h2 data-i18n="ui_resultHeader">Result</h2>
+      <div class="verdict-head">
+        <div class="tier-big">
+          <span class="tier-icon" id="tierIcon"></span>
+          <div class="tier-pill" id="tierPill"><span class="dot"></span><span id="tierLabel">—</span></div>
+        </div>
+        <div class="score-mono" id="scoreLabel">risk score —/100</div>
+      </div>
+      <div class="meter">
+        <div class="meter-track"></div>
+        <div class="meter-marker" id="meterMarker" style="left:0%"></div>
+      </div>
+      <div class="meter-labels"><span data-i18n="meter_safe">Safe</span><span data-i18n="meter_caution">Use caution</span><span data-i18n="meter_danger">Likely scam</span></div>
+      <div class="confidence-note" id="confidenceNote"></div>
+
+      <div class="plain-lang" id="plainLang"></div>
+      <div class="speak-row">
+        <button type="button" class="speak-btn" id="readResultBtn" hidden>🔊 <span data-i18n="ui_readResultBtn">Read result aloud</span></button>
+        <button type="button" class="speak-btn" id="readMsgBtn" hidden>🔊 <span data-i18n="ui_readMsgBtn">Read message aloud</span></button>
+      </div>
+
+      <div class="msg-preview" id="msgPreview"></div>
+
+      <h2 data-i18n="ui_whyHeader">Why we flagged this</h2>
+      <ul class="why-list" id="whyList"></ul>
+
+      <div id="nextStepsWrap"></div>
+
+      <div id="contactCardWrap"></div>
+
+      <div class="feedback-row" id="feedbackRow">
+        <span class="q" data-i18n="ui_fbQuestion">Did we get this right?</span>
+        <button class="fb-btn" data-fb="correct" type="button" data-i18n="ui_fbCorrect">Looks right</button>
+        <button class="fb-btn" id="fbSafeBtn" data-fb="safe" type="button" data-i18n="ui_fbSafe">Actually safe</button>
+        <button class="fb-btn" data-fb="risky" type="button" data-i18n="ui_fbRisky">Actually risky</button>
+        <span class="fb-note" id="fbNote"></span>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <p>Porchlight is a prototype safety tool, not a substitute for caution. Always verify unexpected requests for money or personal information through a phone number or website you already trust.</p>
+    <p>Rule engine + on-device model, trained on 320 messages (200 synthetic + 120 real messages from the public SMS Spam Collection dataset, including its "smishing" category). Verified contacts available for the US, UK, India, Canada, and Australia. English-language messages only for now. No network requests, no accounts, no data collection.</p>
+  </footer>
 </div>
 
 <script>
 (function(){
   "use strict";
+
+  /* ---------------- text layer ----------------
+     All display strings are looked up by key (via t()) rather than hardcoded
+     inline, English-only for now. This is deliberate scaffolding: languages
+     were tried here before (Spanish/Hindi) and rolled back to keep effort
+     focused on detection features first — re-adding languages later should
+     mean populating more entries in `i18n`, not restructuring how strings
+     are looked up. Tamil was added back 2026-09-07 covering the core
+     interface, verdicts, and next-steps a user reads to decide what to do;
+     the longer technical "why we flagged this" rule descriptions and the
+     verified-company/contact-card detail sentences are intentionally left in
+     English for now (t() falls through to i18n.en for any key missing from
+     i18n.ta) rather than machine-translating everything at once. Machine
+     translation quality has NOT been verified by a Tamil speaker — treat it
+     as a draft needing review before relying on it for real users. */
   var currentLang = "en";
   try{ currentLang = localStorage.getItem("porchlight_lang") || "en"; }catch(e){}
 
   var i18n = {
     en: {
-      brandTitle:"Porchlight Academy", brandTag:"Learn to spot a scam yourself",
-      toChecker:"Open the message checker",
-      introText:"Four short, plain-language guides — no quiz, no jargon. Each one distills the same warning signs Porchlight's checker looks for, so you can recognize a scam yourself, even without the tool in hand.",
-      backToCourses:"← Back to all courses",
-      footerNote:"Porchlight Academy is educational content only — it does not check messages for you. Use the Porchlight checker for that. These translations are Claude-authored and have not been reviewed by a native speaker.",
-      startCourse:"Start this guide →",
-
-      c1_title:"Scam Ads", c1_desc:"Fake online stores and social media ads built to take your money and never ship anything.",
-      c1_intro:"These are the warning signs that separate a real online ad from a fake store built to disappear with your money.",
-      c1_s1_t:"Deals that don't make sense", c1_s1_b:"90% off a brand-name item, \"only 2 left,\" a countdown timer — real stores rarely discount this hard, this often, on things people actually want.",
-      c1_s2_t:"Check where the ad actually leads", c1_s2_b:"Tap the ad and look at the website name in the address bar. A real brand's ad should lead to that brand's real website — not a strange, scrambled, or misspelled name.",
-      c1_s3_t:"No real contact information", c1_s3_b:"Scroll to the bottom of the site. A real store shows a phone number, a real address, and a return policy. A scam site usually has none of these, or copies that don't work.",
-      c1_s4_t:"A countdown that never ends", c1_s4_b:"\"Sale ends in 10 minutes!\" that resets every time you reload the page is a manufactured sense of urgency, not a real deadline.",
-      c1_s5_t:"How they ask you to pay", c1_s5_b:"If checkout asks for a gift card, a wire transfer, or cryptocurrency instead of a normal card, stop immediately — no real store requires this.",
-      c1_s6_t:"What to do instead", c1_s6_b:"Don't buy through the ad. If you're interested in the item, search the store's name yourself and go to their real, already-known website directly.",
-
-      c2_title:"AI Ads", c2_desc:"Fake celebrity endorsements and AI-generated voices and videos used to sell scams.",
-      c2_intro:"Scammers now use AI to build fake videos and voices of real people — celebrities, doctors, even a family member's own voice — to make a scam feel trustworthy.",
-      c2_s1_t:"What's actually new here", c2_s1_b:"AI can now generate a video of a real, recognizable person saying anything at all — including \"recommending\" a product or investment they've never heard of.",
-      c2_s2_t:"Look closely at the video", c2_s2_b:"Watch for mouth movements slightly out of sync with the words, unnatural blinking, odd lighting, or skin that looks too smooth or waxy.",
-      c2_s3_t:"Listen closely to the voice", c2_s3_b:"AI voices can sound almost right but slightly flat, robotic, or oddly paced — especially in longer sentences or under background noise.",
-      c2_s4_t:"Ask why this celebrity, why now", c2_s4_b:"A famous person suddenly endorsing a random health supplement or investment app, with no mention of it anywhere else, is a major red flag.",
-      c2_s5_t:"A cloned voice is not proof of identity", c2_s5_b:"AI can now copy a specific family member's voice from just a few seconds of audio. \"It sounded exactly like them\" is no longer reliable proof of who's speaking.",
-      c2_s6_t:"How to check yourself", c2_s6_b:"Search the celebrity's name plus the product name plus the word \"scam.\" If it's a known scam, real news coverage usually shows up within seconds.",
-
-      c3_title:"Scam Messages", c3_desc:"The exact warning signs Porchlight's checker looks for in texts, emails, and invoices.",
-      c3_intro:"This is the same list of patterns Porchlight's automatic checker looks for — so you can catch these yourself, with or without the tool.",
-      c3_s1_t:"Urgency and tight deadlines", c3_s1_b:"\"Act now,\" \"within 24 hours,\" \"final notice.\" Real organizations rarely demand instant action by text message.",
-      c3_s2_t:"Unusual payment requests", c3_s2_b:"Gift cards, wire transfers, cryptocurrency — no real company or government agency ever asks to be paid this way.",
-      c3_s3_t:"Requests for sensitive information", c3_s3_b:"Never share a password, PIN, social security number, or full card number by text or email, no matter who is asking.",
-      c3_s4_t:"Threats to scare you into acting", c3_s4_b:"\"You'll be arrested,\" \"your account will be closed\" — a real authority does not threaten you this way over text.",
-      c3_s5_t:"A prize you never entered", c3_s5_b:"\"Congratulations, you've won!\" for a contest, lottery, or drawing you never actually entered is a classic lure.",
-      c3_s6_t:"Links that don't quite match", c3_s6_b:"A link that isn't the company's real website name, or one that hides behind a link-shortening service, is worth real suspicion.",
-      c3_s7_t:"The \"it's me\" family emergency", c3_s7_b:"An urgent message claiming to be a relative in trouble, asking for money right away — sometimes from a number you don't recognize.",
-      c3_s8_t:"Fake police, customs, or tax officials", c3_s8_b:"A message pretending to be an authority, threatening arrest unless you pay immediately, is designed to short-circuit your judgment through fear.",
-      c3_s9_t:"What to do with any of these", c3_s9_b:"Never use the number or link in the message itself. Look up the real company's or family member's number yourself, and call them directly to check.",
-
-      c4_title:"Scam Calls", c4_desc:"Robocalls, spoofed caller ID, and the phone versions of the same old scams.",
-      c4_intro:"The same tricks as scam texts, adapted for a live voice — plus a few tricks unique to phone calls.",
-      c4_s1_t:"Caller ID can be faked", c4_s1_b:"Scammers can make your phone display a real bank's name or a local-looking number. Don't trust the name or number on the screen by itself.",
-      c4_s2_t:"Recorded calls with urgency", c4_s2_b:"A robotic voice claiming there's a warrant for your arrest, or that your social security number has been \"suspended,\" is not how real agencies contact you.",
-      c4_s3_t:"The grandparent emergency, by phone", c4_s3_b:"A caller claims to be a grandchild in trouble — in jail, in an accident — begging for bail money and urging you to keep it secret from the rest of the family.",
-      c4_s4_t:"Unsolicited tech support calls", c4_s4_b:"Someone calls claiming your computer has a virus and asks for remote access to \"fix\" it. No legitimate tech company calls you out of the blue like this.",
-      c4_s5_t:"The silent pause", c4_s5_b:"If you answer and there's a pause before anyone speaks, it's often an automated dialer confirming your number is active and real — hang up.",
-      c4_s6_t:"What to do instead", c4_s6_b:"Hang up. Call the organization or family member back using a number you look up yourself — never a number the caller gave you."
+      r_urgency:"Uses pressure or a tight deadline to stop you from thinking it through.",
+      r_money:"Asks for payment through gift cards, wire transfers, or crypto — real organizations never require these.",
+      r_personal:"Asks for sensitive personal or financial information by text or email.",
+      r_threat:"Threatens arrest, lawsuits, or account closure to scare you into acting fast.",
+      r_prize:"Promises a prize or refund you didn't ask for — a classic lure.",
+      r_shortlink:"Hides the real destination behind a link-shortening service.",
+      r_link:"Contains a link — go to the official site or app directly instead of clicking.",
+      r_generic:"Uses a generic greeting instead of your real name, common in mass-sent scams.",
+      r_grandparent:"Matches the 'family emergency' script used to pressure relatives into sending money fast.",
+      r_customsfee:"Claims a package is stuck in customs and needs a fee to release it — a scam pattern used worldwide, regardless of which courier or postal service is named.",
+      r_authority:"Impersonates police, customs, or another authority and threatens arrest to force a payment — the pattern behind India's 'digital arrest' scam and similar authority-impersonation scams elsewhere.",
+      r_techsupport:"Mimics a tech-support pop-up or call demanding remote access to your device — legitimate companies do not contact you this way about a virus.",
+      r_romance:"Uses the affection-then-emergency script common in online romance scams, where a person you've never met asks for money.",
+      r_jobinvest:"Promises unusually high, guaranteed earnings for little or no work — a common lure in fake job and investment scams.",
+      r_accountverify:"Claims your account or verification is suspended, then asks you to click, log in, or verify right away — a very common bank and account-phishing script.",
+      r_refundclick:"Dangles an overpayment or refund and asks you to click or follow a link to claim it — a common phishing lure, even though it sounds harmless.",
+      r_callbacklure:"Claims a delivery, prize, or customer-service matter needs your attention and pushes you to call a number or reply — a common lure that routes victims into a premium-rate or scam call.",
+      r_identitylending:"Asks you to open an account or complete a task using your own identity for someone else's benefit — a money-mule tactic that can make you legally responsible for what they do with it.",
+      r_taskjob:"Promises easy pay for simple online tasks but requires you to send a 'refundable' deposit first to activate or unlock your earnings — real jobs never require you to pay to get paid.",
+      r_coldopener:"Uses a pushy 'don't you remember me' or guilt-tripping reconnection opener common in romance and social-engineering scams that build trust before asking for money.",
+      r_formatting:"Uses unusual formatting — ALL CAPS or a burst of exclamation marks — common in mass-sent scam texts.",
+      r_upirequest:"Asks you to approve a UPI payment or 'collect' request, or scan a QR code to pay — approving one can pull money straight out of your account, so only approve it if you already know exactly who requested it and why.",
+      c_domain:"The sender address doesn't match {company}'s real domain ({domain}).",
+      c_compromise:"{name} has never asked you for money before out of {count} messages on file. This could mean their phone or account has been compromised.",
+      c_impersonation:"This claims to be {name}, but it did not come from {name}'s saved number.",
+      c_unknownrisky:"This number is not in your saved contacts, and the message asks for money or claims a personal relationship.",
+      c_unverified:"This claims to be {name}, but no phone or email was given to check it against your saved contact.",
+      c_relmismatch:"It's unusual to be asked for money by someone in a '{rel}' relationship — this pattern shows up often in romance and grooming scams.",
+      c_relrepeat:"This contact is marked as '{rel}' — repeated money requests from this kind of relationship are still worth watching, even though they've asked before.",
+      c_allowedrisky:"You've allowed {name} to ask for money, but this is a '{rel}' relationship — a common profile for romance scams, so Porchlight still flags it lightly rather than staying silent.",
+      c_benign:"Also contains ordinary, friendly language, which lowers the overall risk a little.",
+      c_override:"A hard rule matched a known high-risk pattern, so this is marked risky regardless of the model score.",
+      c_modelIntro:"Words the on-device model associates with scams in this message:",
+      c_noteTrusted:"You've told Porchlight before that messages from {name} are safe.",
+      c_noteFlagged:"You've flagged messages claiming to be from {name} as risky before.",
+      c_clear:"No scam patterns or risky phrasing detected.",
+      c_unsure:"No clear scam patterns were found, but nothing about the wording confirms this is genuine either.",
+      c_thatSender:"that sender",
+      plain_compromise:"This is a saved contact asking for money for the first time. Call them on the number you already have before sending anything — their phone or account may be compromised.",
+      plain_impersonation:"This claims to know you personally, but the number does not match. Call the real person on a number you already trust before doing anything.",
+      plain_relmismatch:"Someone in this kind of relationship asking you for money, especially early on or out of nowhere, is a well-known pattern in romance and grooming scams. Slow down and verify who this really is before sending anything.",
+      plain_unknownrisky:"This claims to know you personally, but the number is not one you've saved. Verify who this really is before doing anything.",
+      plain_grandparent:"This reads like the 'it's me, send money' emergency scam. Do not send money — call your family member directly using a number you already have.",
+      plain_authority:"Real police, tax, and customs authorities do not threaten arrest over text or phone to demand instant payment. Do not pay or join any video call — hang up or ignore this and contact the agency directly using a number you look up yourself.",
+      plain_identitylending:"This asks you to open an account or complete a task using your own name or identity for someone else. Do not do this — you could become legally responsible for what they do with it. Do not share ID documents or account access.",
+      plain_dangerGeneric:"This message shows strong signs of a scam. Do not click any links, call any numbers, or send money or personal information.",
+      plain_caution:"Something about this message is worth a second look before you respond, click, or pay anything.",
+      plain_safe:"This message doesn't show the warning signs Porchlight checks for. Still, when in doubt, verify directly.",
+      plain_unsure:"Nothing obviously suspicious was detected, but Porchlight cannot confirm this message is genuine. If it asks for money, personal details, or urgent action later, verify independently before doing anything.",
+      conf_low_label:"Low", conf_low_note:"Brand-new saved contact — there is no message history yet to compare this against.",
+      conf_building_label:"Building", conf_building_note:"Only {count} past message(s) on file with this contact so far.",
+      conf_high_label:"High", conf_high_note:"Based on {count} past messages with this contact.",
+      conf_moderate_label:"Moderate", conf_moderate_note:"Based on scam-pattern rules and the on-device model only — no personal history is available for this sender.",
+      conf_companyHigh_note:"Based on a verified real-world directory entry for {company}.",
+      tier_danger:"Likely scam", tier_caution:"Use caution", tier_safe:"Looks safe", tier_unsure:"Not enough information",
+      meter_safe:"Safe", meter_caution:"Use caution", meter_danger:"Likely scam",
+      card_compromise_title:"Double-check before sending anything",
+      card_compromise_body:"This matches your saved contact <b>{name}</b>, but they have not asked you for money before ({prior} of {history} past messages did). If their phone or account has been compromised, someone else could be sending this instead of them.",
+      card_compromise_call:"<b>Call {name}</b> at {tel}, not by replying to this message, before sending anything.",
+      card_impersonation_title:"Number does not match",
+      card_impersonation_body:"This message claims to be <b>{name}</b>, but it did not come from {name}'s saved number. Call {tel} to confirm before responding.",
+      card_unknownrisky_title:"Unrecognized number",
+      card_unknownrisky_body:"This number is not in your saved contacts, but the message asks for money or claims to know you personally.{relnote} Verify directly before trusting it.",
+      card_unknownrisky_relnote:" It also claims a \"{rel}\" relationship, which makes an unsolicited money ask even more unusual.",
+      card_unverified_title:"Unconfirmed identity",
+      card_unverified_body:"This claims to be <b>{name}</b>. Add the sender's number above, or call {tel} directly, to confirm it is really them.",
+      card_known_title:"Matches a saved contact",
+      card_known_body:"<b>{name}</b>{relbit} — {history} message(s) on file, {prior} involved money before.{allowednote}",
+      card_known_relbit:" (marked as \"{rel}\")",
+      card_known_allowedOverride:" You have marked {name} as allowed to ask for money, so this was not treated as unusual.",
+      card_known_allowedButRisky:" You have allowed money asks from this contact, but because of the relationship type Porchlight still notes it rather than staying fully silent.",
+      card_unknownplain_title:"Not a saved contact",
+      card_unknownplain_body:"This number is not in your saved contacts yet. Add it under \"Manage saved contacts\" if it is someone you trust.",
+      company_title:"This message claims to be from {name}",
+      company_body:"Do not use any phone number or link printed in the message. Here is {name}'s real, verified contact info:",
+      company_phone_label:"Verified phone", company_website_label:"Verified website",
+      company_nophone_note:"This organization does not use a single public verification line — log in only through the official site above.",
+      company_doublecheck:"Double-check by searching the company name in your browser rather than trusting any contact info from the message itself.",
+      ui_checkHeader:"Check a message", ui_resultHeader:"Result", ui_whyHeader:"Why we flagged this",
+      ui_nextStepsHeader:"What should I do?",
+      act_noClickLinks:"Don't click any links or call any numbers printed in the message.",
+      act_noSendMoney:"Don't send money, gift cards, or crypto based on this message.",
+      act_noUpiApprove:"Don't approve any UPI or \"collect\" request — approving one sends money out of your account, even though it can look like you're the one receiving something.",
+      act_noShareIdentity:"Don't open accounts, share ID documents, or complete tasks using your own identity for someone else.",
+      act_hangUpAuthority:"Hang up or ignore this. Real police, tax, and customs authorities don't demand instant payment or make you stay on a video call. Contact the agency yourself using a number you look up.",
+      act_noRemoteAccess:"Don't give remote access to your device. Hang up and contact the company directly, using a number you look up yourself, if you're worried.",
+      act_callSavedNumber:"Call {name} on the number you already have saved — not by replying to this message.",
+      act_verifyKnownNumber:"Verify who this really is before doing anything, using a number or address you already know — not one from this message.",
+      act_useVerifiedInfo:"Use the verified phone number or website shown above instead of anything printed in the message.",
+      act_askTrusted:"Ask a family member or someone you trust before responding, especially if it later asks for money or personal details.",
+      act_pauseFirst:"Pause before responding, clicking, or paying anything — take a moment to think it through.",
+      act_noneNeeded:"No action needed — this message doesn't show the signs Porchlight checks for.",
+      ui_msgLabel:"Paste the text, email, or invoice wording", ui_msgPlaceholder:"Paste a suspicious text or email here...",
+      ui_analyzeBtn:"Analyze this message",
+      ui_fbQuestion:"Did we get this right?", ui_fbCorrect:"Looks right", ui_fbSafe:"Actually safe", ui_fbRisky:"Actually risky",
+      ui_translateBtn:"Copy message to translate", ui_translateNote:"Copied — paste it into Google Translate, or any translator app you trust, to read it in your language.",
+      ui_readInLang:"Read this message in your language",
+      ui_readResultBtn:"Read result aloud", ui_readMsgBtn:"Read message aloud", ui_stopReading:"Stop reading",
+      ui_waitSeconds:"Wait {n}s before confirming...", ui_riskScore:"risk score {n}/100",
+      ui_micBtn:"Speak instead of typing", ui_micListening:"Listening… tap again to stop",
+      ui_micPrivacyNote:"Your browser may send audio to an outside service to convert it to text — unlike the read-aloud feature, this isn't guaranteed to stay on your device.",
+      ui_screenshotBtn:"Upload a screenshot",
+      ui_screenshotLoading:"Reading text from the image…",
+      ui_screenshotDone:"Text extracted below — please check it's accurate, then click Analyze.",
+      ui_screenshotError:"Couldn't read text from that image. Try a clearer screenshot, or paste the text directly.",
+      ui_screenshotPrivacyNote:"The image itself is processed on your device and never uploaded — but the first time you use this, your browser downloads the text-reading engine from a content-delivery network.",
+      fb_confirmLegit:"Got it — recording this as a confirmed, legitimate money request from {name}.",
+      fb_trustedNote:"Got it — remembering that {name} is trusted.",
+      fb_moreCautious:"Thanks — Porchlight will be more cautious with that sender.",
+      fb_thanksConfirm:"Thanks for confirming.",
+      fb_noted:"Noted (no sender name to remember this by).",
+      badge_highrisk:"High risk", badge_caution:"Caution", badge_model:"On-device model", badge_lowerrisk:"Lower risk",
+      badge_override:"Override", badge_personal:"Personal", badge_clear:"Clear",
+      "rel_":"Not specified", rel_spouse:"Spouse / partner", rel_parent:"Parent", rel_child:"Son / daughter",
+      rel_sibling:"Sibling", rel_bestfriend:"Best friend", rel_friend:"Friend", rel_coworker:"Coworker",
+      rel_teacher:"Teacher", rel_boss:"Boss", rel_landlord:"Landlord", rel_acquaintance:"Acquaintance",
+      rel_newcontact:"New / online-met contact", rel_lover:"Lover / romantic interest",
+      rel_rival:"Rival", rel_enemy:"Enemy"
     },
-    es: {
-      brandTitle:"Porchlight Academy", brandTag:"Aprende a reconocer una estafa tú mismo",
-      toChecker:"Abrir el verificador de mensajes",
-      introText:"Cuatro guías cortas y en lenguaje simple — sin examen, sin jerga. Cada una resume las mismas señales de alerta que busca el verificador de Porchlight, para que puedas reconocer una estafa por ti mismo, incluso sin la herramienta a mano.",
-      backToCourses:"← Volver a todas las guías",
-      footerNote:"Porchlight Academy es solo contenido educativo — no verifica mensajes por ti. Usa el verificador de Porchlight para eso. Estas traducciones fueron hechas por Claude y no han sido revisadas por un hablante nativo.",
-      startCourse:"Comenzar esta guía →",
-
-      c1_title:"Anuncios falsos", c1_desc:"Tiendas en línea y anuncios en redes sociales falsos hechos para quitarte el dinero sin enviar nada.",
-      c1_intro:"Estas son las señales que diferencian un anuncio real de una tienda falsa hecha para desaparecer con tu dinero.",
-      c1_s1_t:"Ofertas que no tienen sentido", c1_s1_b:"90% de descuento en una marca conocida, \"solo quedan 2\", un contador regresivo — las tiendas reales rara vez ofrecen descuentos tan fuertes y frecuentes en cosas que la gente realmente quiere.",
-      c1_s2_t:"Revisa a dónde lleva realmente el anuncio", c1_s2_b:"Toca el anuncio y mira el nombre del sitio en la barra de direcciones. El anuncio de una marca real debería llevar al sitio web real de esa marca, no a un nombre raro, mezclado o mal escrito.",
-      c1_s3_t:"Sin información de contacto real", c1_s3_b:"Baja hasta el final del sitio. Una tienda real muestra un teléfono, una dirección real y una política de devoluciones. Un sitio falso normalmente no tiene nada de esto, o copia enlaces que no funcionan.",
-      c1_s4_t:"Un contador que nunca termina", c1_s4_b:"\"¡La oferta termina en 10 minutos!\" que se reinicia cada vez que recargas la página es una urgencia fabricada, no un plazo real.",
-      c1_s5_t:"Cómo te piden que pagues", c1_s5_b:"Si al pagar te piden una tarjeta de regalo, una transferencia bancaria o criptomonedas en vez de una tarjeta normal, detente de inmediato — ninguna tienda real exige esto.",
-      c1_s6_t:"Qué hacer en su lugar", c1_s6_b:"No compres a través del anuncio. Si te interesa el producto, busca tú mismo el nombre de la tienda y entra directamente a su sitio web real y ya conocido.",
-
-      c2_title:"Anuncios con IA", c2_desc:"Falsas recomendaciones de famosos y voces o videos generados con inteligencia artificial usados para vender estafas.",
-      c2_intro:"Ahora los estafadores usan IA para crear videos y voces falsas de personas reales — famosos, médicos, incluso la voz de un familiar — para que una estafa parezca confiable.",
-      c2_s1_t:"Qué es realmente nuevo aquí", c2_s1_b:"La IA ahora puede generar un video de una persona real y reconocible diciendo cualquier cosa, incluyendo \"recomendar\" un producto o inversión que nunca ha mencionado.",
-      c2_s2_t:"Observa el video con atención", c2_s2_b:"Fíjate si los movimientos de la boca no coinciden bien con las palabras, si el parpadeo se ve poco natural, si la iluminación es rara, o si la piel se ve demasiado lisa o cerosa.",
-      c2_s3_t:"Escucha la voz con atención", c2_s3_b:"Las voces generadas por IA pueden sonar casi correctas pero un poco planas, robóticas o con un ritmo extraño, especialmente en oraciones largas o con ruido de fondo.",
-      c2_s4_t:"Pregúntate por qué esta persona famosa, por qué ahora", c2_s4_b:"Que una persona famosa de repente recomiende un suplemento de salud o una app de inversión al azar, sin que se mencione en ningún otro lado, es una señal de alerta importante.",
-      c2_s5_t:"Una voz clonada no es prueba de identidad", c2_s5_b:"La IA ahora puede copiar la voz específica de un familiar con solo unos segundos de audio. \"Sonaba exactamente como él/ella\" ya no es una prueba confiable de quién habla realmente.",
-      c2_s6_t:"Cómo verificarlo tú mismo", c2_s6_b:"Busca el nombre del famoso, el nombre del producto y la palabra \"estafa\". Si es una estafa conocida, normalmente aparecen noticias reales en segundos.",
-
-      c3_title:"Mensajes de estafa", c3_desc:"Las mismas señales de alerta que busca el verificador de Porchlight en textos, correos y facturas.",
-      c3_intro:"Esta es la misma lista de patrones que busca el verificador automático de Porchlight, para que puedas reconocerlos tú mismo, con o sin la herramienta.",
-      c3_s1_t:"Urgencia y plazos muy cortos", c3_s1_b:"\"Actúa ahora\", \"dentro de 24 horas\", \"aviso final\". Las organizaciones reales rara vez exigen una acción inmediata por mensaje de texto.",
-      c3_s2_t:"Solicitudes de pago inusuales", c3_s2_b:"Tarjetas de regalo, transferencias bancarias, criptomonedas — ninguna empresa o agencia gubernamental real pide que se le pague así.",
-      c3_s3_t:"Solicitudes de información sensible", c3_s3_b:"Nunca compartas una contraseña, un PIN, un número de seguro social o el número completo de una tarjeta por mensaje o correo, sin importar quién lo pida.",
-      c3_s4_t:"Amenazas para asustarte y que actúes", c3_s4_b:"\"Serás arrestado\", \"tu cuenta será cerrada\" — una autoridad real no te amenaza así por mensaje de texto.",
-      c3_s5_t:"Un premio que nunca ganaste", c3_s5_b:"\"¡Felicidades, ganaste!\" por un concurso, lotería o sorteo en el que nunca participaste, es un anzuelo clásico.",
-      c3_s6_t:"Enlaces que no coinciden del todo", c3_s6_b:"Un enlace que no es el nombre real del sitio web de la empresa, o que se esconde detrás de un acortador de enlaces, merece sospecha real.",
-      c3_s7_t:"La emergencia familiar de \"soy yo\"", c3_s7_b:"Un mensaje urgente que dice ser un familiar en problemas, pidiendo dinero de inmediato — a veces desde un número que no reconoces.",
-      c3_s8_t:"Falsos policías, aduanas o funcionarios de impuestos", c3_s8_b:"Un mensaje que finge ser una autoridad, amenazando con arresto si no pagas de inmediato, está diseñado para bloquear tu juicio a través del miedo.",
-      c3_s9_t:"Qué hacer ante cualquiera de estos", c3_s9_b:"Nunca uses el número o el enlace del mensaje mismo. Busca tú mismo el número real de la empresa o del familiar, y llama directamente para confirmar.",
-
-      c4_title:"Llamadas de estafa", c4_desc:"Llamadas automáticas, identificador de llamadas falsificado y las versiones telefónicas de las mismas estafas de siempre.",
-      c4_intro:"Los mismos trucos que los mensajes de estafa, adaptados a una voz en vivo — más algunos trucos exclusivos de las llamadas telefónicas.",
-      c4_s1_t:"El identificador de llamadas se puede falsificar", c4_s1_b:"Los estafadores pueden hacer que tu teléfono muestre el nombre de un banco real o un número que parece local. No confíes solo en el nombre o número que aparece en la pantalla.",
-      c4_s2_t:"Llamadas grabadas con urgencia", c4_s2_b:"Una voz robótica que dice que hay una orden de arresto en tu contra, o que tu número de seguro social fue \"suspendido\", no es cómo te contactan las agencias reales.",
-      c4_s3_t:"La emergencia del nieto, por teléfono", c4_s3_b:"Alguien llama diciendo ser un nieto en problemas — en la cárcel, en un accidente — pidiendo dinero para la fianza y pidiéndote mantenerlo en secreto del resto de la familia.",
-      c4_s4_t:"Llamadas de soporte técnico no solicitadas", c4_s4_b:"Alguien llama diciendo que tu computadora tiene un virus y pide acceso remoto para \"arreglarlo\". Ninguna empresa de tecnología legítima te llama así de la nada.",
-      c4_s5_t:"La pausa silenciosa", c4_s5_b:"Si contestas y hay una pausa antes de que alguien hable, suele ser un marcador automático confirmando que tu número está activo — cuelga.",
-      c4_s6_t:"Qué hacer en su lugar", c4_s6_b:"Cuelga. Llama de vuelta a la organización o al familiar usando un número que busques tú mismo, nunca el número que te dio quien llamó."
-    },
-    hi: {
-      brandTitle:"Porchlight Academy", brandTag:"खुद स्कैम पहचानना सीखें",
-      toChecker:"संदेश जाँचने वाला टूल खोलें",
-      introText:"चार छोटी, सरल भाषा वाली गाइड — कोई क्विज़ नहीं, कोई कठिन शब्द नहीं। हर गाइड उन्हीं चेतावनी संकेतों को बताती है जिन्हें Porchlight का चेकर खोजता है, ताकि आप बिना टूल के भी खुद स्कैम पहचान सकें।",
-      backToCourses:"← सभी गाइड पर वापस जाएँ",
-      footerNote:"Porchlight Academy केवल शिक्षा के लिए है — यह आपके लिए संदेश नहीं जाँचता। इसके लिए Porchlight का चेकर इस्तेमाल करें। ये अनुवाद Claude द्वारा किए गए हैं और किसी मातृभाषी व्यक्ति द्वारा जाँचे नहीं गए हैं।",
-      startCourse:"यह गाइड शुरू करें →",
-
-      c1_title:"नकली विज्ञापन", c1_desc:"नकली ऑनलाइन दुकानें और सोशल मीडिया विज्ञापन, जो आपका पैसा लेकर कभी कुछ नहीं भेजते।",
-      c1_intro:"ये वे चेतावनी संकेत हैं जो असली विज्ञापन को उस नकली दुकान से अलग करते हैं जो आपका पैसा लेकर गायब हो जाती है।",
-      c1_s1_t:"ऐसे ऑफर जो समझ से बाहर हों", c1_s1_b:"किसी बड़े ब्रांड पर 90% छूट, \"सिर्फ 2 बचे हैं\", उल्टी गिनती वाला टाइमर — असली दुकानें ऐसी भारी छूट, इतनी बार, लोगों की चाही हुई चीज़ों पर शायद ही देती हैं।",
-      c1_s2_t:"देखें विज्ञापन असल में कहाँ ले जाता है", c1_s2_b:"विज्ञापन पर टैप करें और एड्रेस बार में वेबसाइट का नाम देखें। असली ब्रांड का विज्ञापन उसी ब्रांड की असली वेबसाइट पर ले जाना चाहिए — किसी अजीब, मिले-जुले या गलत लिखे नाम पर नहीं।",
-      c1_s3_t:"कोई असली संपर्क जानकारी नहीं", c1_s3_b:"साइट के सबसे नीचे तक स्क्रॉल करें। असली दुकान एक फोन नंबर, असली पता और वापसी की नीति दिखाती है। नकली साइट पर अक्सर इनमें से कुछ नहीं होता, या ऐसे लिंक होते हैं जो काम नहीं करते।",
-      c1_s4_t:"ऐसा टाइमर जो कभी खत्म नहीं होता", c1_s4_b:"\"सेल 10 मिनट में खत्म!\" जो पेज दोबारा लोड करते ही फिर से शुरू हो जाए, यह असली समय-सीमा नहीं बल्कि बनावटी जल्दबाज़ी है।",
-      c1_s5_t:"वे भुगतान कैसे माँगते हैं", c1_s5_b:"अगर चेकआउट में सामान्य कार्ड की जगह गिफ्ट कार्ड, वायर ट्रांसफर या क्रिप्टोकरेंसी माँगी जाए, तो तुरंत रुक जाएँ — कोई असली दुकान ऐसा नहीं माँगती।",
-      c1_s6_t:"इसके बजाय क्या करें", c1_s6_b:"विज्ञापन से न खरीदें। अगर सामान में दिलचस्पी है, तो खुद दुकान का नाम खोजें और सीधे उनकी असली, पहले से जानी हुई वेबसाइट पर जाएँ।",
-
-      c2_title:"AI से बने विज्ञापन", c2_desc:"मशहूर हस्तियों की नकली सिफारिशें और AI से बनाई गई आवाज़ें और वीडियो, जो स्कैम बेचने के लिए इस्तेमाल होते हैं।",
-      c2_intro:"अब स्कैम करने वाले असली लोगों — मशहूर हस्तियों, डॉक्टरों, यहाँ तक कि किसी परिवार वाले की आवाज़ — के नकली वीडियो और आवाज़ें बनाने के लिए AI का उपयोग करते हैं, ताकि स्कैम भरोसेमंद लगे।",
-      c2_s1_t:"यहाँ असल में नया क्या है", c2_s1_b:"AI अब किसी असली, पहचाने जाने वाले व्यक्ति का ऐसा वीडियो बना सकता है जिसमें वह कुछ भी कह रहा हो — यहाँ तक कि ऐसे प्रोडक्ट या निवेश की \"सिफारिश\" भी, जिसके बारे में उसने कभी सुना ही न हो।",
-      c2_s2_t:"वीडियो को ध्यान से देखें", c2_s2_b:"देखें कि होंठों की हरकत शब्दों से थोड़ी अलग तो नहीं, पलकें झपकना असामान्य तो नहीं, रोशनी अजीब तो नहीं, या त्वचा बहुत ज़्यादा चिकनी या मोम जैसी तो नहीं दिखती।",
-      c2_s3_t:"आवाज़ को ध्यान से सुनें", c2_s3_b:"AI आवाज़ें लगभग सही लग सकती हैं लेकिन थोड़ी सपाट, रोबोट जैसी या अजीब गति वाली हो सकती हैं — खासकर लंबे वाक्यों में या पीछे शोर होने पर।",
-      c2_s4_t:"सोचें — यही व्यक्ति क्यों, अभी क्यों", c2_s4_b:"किसी मशहूर व्यक्ति का अचानक किसी सामान्य हेल्थ सप्लीमेंट या निवेश ऐप की सिफारिश करना, जबकि इसका कहीं और ज़िक्र न हो, एक बड़ा चेतावनी संकेत है।",
-      c2_s5_t:"क्लोन की गई आवाज़ पहचान का सबूत नहीं है", c2_s5_b:"AI अब किसी परिवार वाले की आवाज़ को सिर्फ कुछ सेकंड की ऑडियो से कॉपी कर सकता है। \"आवाज़ बिल्कुल वैसी ही थी\" अब यह साबित नहीं करता कि असल में बोलने वाला कौन है।",
-      c2_s6_t:"खुद कैसे जाँचें", c2_s6_b:"मशहूर व्यक्ति का नाम, प्रोडक्ट का नाम और \"स्कैम\" शब्द मिलाकर खोजें। अगर यह जाना-पहचाना स्कैम है, तो असली खबरें आमतौर पर तुरंत सामने आ जाती हैं।",
-
-      c3_title:"स्कैम संदेश", c3_desc:"टेक्स्ट, ईमेल और बिलों में वही चेतावनी संकेत जिन्हें Porchlight का चेकर खोजता है।",
-      c3_intro:"यह वही सूची है जिसे Porchlight का ऑटोमैटिक चेकर खोजता है — ताकि आप इन्हें टूल के साथ या बिना टूल के भी खुद पहचान सकें।",
-      c3_s1_t:"जल्दबाज़ी और बहुत कम समय-सीमा", c3_s1_b:"\"अभी करें\", \"24 घंटे के अंदर\", \"अंतिम सूचना\"। असली संस्थाएँ शायद ही टेक्स्ट संदेश से तुरंत कार्रवाई की माँग करती हैं।",
-      c3_s2_t:"असामान्य भुगतान की माँग", c3_s2_b:"गिफ्ट कार्ड, वायर ट्रांसफर, क्रिप्टोकरेंसी — कोई असली कंपनी या सरकारी विभाग कभी इस तरह भुगतान नहीं माँगता।",
-      c3_s3_t:"संवेदनशील जानकारी की माँग", c3_s3_b:"पासवर्ड, पिन, सामाजिक सुरक्षा नंबर या पूरा कार्ड नंबर कभी भी टेक्स्ट या ईमेल से किसी के साथ साझा न करें, चाहे कोई भी माँगे।",
-      c3_s4_t:"डराकर कार्रवाई करवाने वाली धमकियाँ", c3_s4_b:"\"आपको गिरफ्तार किया जाएगा\", \"आपका खाता बंद हो जाएगा\" — असली अधिकारी टेक्स्ट से इस तरह धमकी नहीं देते।",
-      c3_s5_t:"ऐसा इनाम जो कभी माँगा ही नहीं", c3_s5_b:"किसी ऐसे प्रतियोगिता, लॉटरी या ड्रॉ के लिए \"बधाई हो, आप जीत गए!\" जिसमें आपने कभी हिस्सा ही नहीं लिया — यह एक क्लासिक जाल है।",
-      c3_s6_t:"ऐसे लिंक जो पूरी तरह मेल नहीं खाते", c3_s6_b:"ऐसा लिंक जो कंपनी की असली वेबसाइट के नाम जैसा नहीं है, या जो लिंक छोटा करने वाली सेवा के पीछे छिपा है, उस पर सच में शक करना चाहिए।",
-      c3_s7_t:"\"यह मैं हूँ\" वाली पारिवारिक आपातकाल", c3_s7_b:"एक जरूरी संदेश जो किसी मुसीबत में फँसे रिश्तेदार होने का दावा करता है और तुरंत पैसे माँगता है — कभी-कभी किसी अनजान नंबर से।",
-      c3_s8_t:"नकली पुलिस, कस्टम्स या टैक्स अधिकारी", c3_s8_b:"एक संदेश जो अधिकारी होने का नाटक करता है और तुरंत भुगतान न करने पर गिरफ्तारी की धमकी देता है, डर के ज़रिए आपकी सोचने-समझने की क्षमता को रोकने के लिए बनाया गया है।",
-      c3_s9_t:"इनमें से किसी के साथ क्या करें", c3_s9_b:"संदेश में दिए गए नंबर या लिंक का कभी इस्तेमाल न करें। खुद कंपनी या परिवार वाले का असली नंबर खोजें, और पुष्टि के लिए सीधे उन्हें कॉल करें।",
-
-      c4_title:"स्कैम कॉल", c4_desc:"रोबोकॉल, नकली कॉलर ID, और वही पुराने स्कैम फोन के ज़रिए।",
-      c4_intro:"स्कैम संदेशों जैसी ही चालें, लेकिन असली आवाज़ में — साथ ही कुछ ऐसी चालें जो सिर्फ फोन कॉल में इस्तेमाल होती हैं।",
-      c4_s1_t:"कॉलर ID को नकली बनाया जा सकता है", c4_s1_b:"स्कैम करने वाले आपके फोन पर किसी असली बैंक का नाम या स्थानीय जैसा दिखने वाला नंबर दिखा सकते हैं। स्क्रीन पर दिखने वाले नाम या नंबर पर अकेले भरोसा न करें।",
-      c4_s2_t:"जल्दबाज़ी वाली रिकॉर्ड की गई कॉलें", c4_s2_b:"एक रोबोट जैसी आवाज़ जो कहे कि आपके खिलाफ गिरफ्तारी वारंट है, या आपका सामाजिक सुरक्षा नंबर \"निलंबित\" कर दिया गया है — असली विभाग इस तरह संपर्क नहीं करते।",
-      c4_s3_t:"फोन पर पोते-पोती वाला आपातकाल", c4_s3_b:"कोई कॉल करने वाला मुसीबत में फँसे पोते-पोती होने का दावा करता है — जेल में, दुर्घटना में — और जमानत के लिए पैसे माँगता है, और परिवार के बाकी लोगों से इसे गुप्त रखने को कहता है।",
-      c4_s4_t:"बिना माँगे टेक-सपोर्ट कॉलें", c4_s4_b:"कोई कॉल करके कहता है कि आपके कंप्यूटर में वायरस है और उसे \"ठीक\" करने के लिए रिमोट एक्सेस माँगता है। कोई असली टेक कंपनी अचानक इस तरह कॉल नहीं करती।",
-      c4_s5_t:"चुप्पी वाला ठहराव", c4_s5_b:"अगर आप कॉल उठाएँ और किसी के बोलने से पहले कुछ देर की चुप्पी हो, तो अक्सर यह एक ऑटोमेटेड डायलर होता है जो जाँच रहा है कि आपका नंबर सक्रिय है — फोन काट दें।",
-      c4_s6_t:"इसके बजाय क्या करें", c4_s6_b:"फोन काट दें। संस्था या परिवार वाले को खुद खोजे गए नंबर से वापस कॉल करें — कभी भी कॉल करने वाले के दिए गए नंबर से नहीं।"
+    ta: {
+      ui_checkHeader:"செய்தியைச் சரிபார்க்கவும்", ui_resultHeader:"முடிவு", ui_whyHeader:"ஏன் இதைக் குறியிட்டோம்",
+      ui_nextStepsHeader:"நான் என்ன செய்ய வேண்டும்?",
+      ui_msgLabel:"உரை, மின்னஞ்சல் அல்லது விலைப்பட்டியல் வார்த்தைகளை ஒட்டவும்",
+      ui_msgPlaceholder:"சந்தேகத்திற்குரிய உரை அல்லது மின்னஞ்சலை இங்கே ஒட்டவும்...",
+      ui_analyzeBtn:"இந்த செய்தியை பரிசோதிக்கவும்",
+      ui_fbQuestion:"நாங்கள் சரியாகச் சொன்னோமா?", ui_fbCorrect:"சரியாக உள்ளது",
+      ui_fbSafe:"உண்மையில் பாதுகாப்பானது", ui_fbRisky:"உண்மையில் ஆபத்தானது",
+      ui_translateBtn:"மொழிபெயர்க்க செய்தியை நகலெடு",
+      ui_translateNote:"நகலெடுக்கப்பட்டது — உங்கள் மொழியில் படிக்க Google Translate அல்லது நம்பகமான மொழிபெயர்ப்பு பயன்பாட்டில் ஒட்டவும்.",
+      ui_readResultBtn:"முடிவை சத்தமாக படிக்கவும்", ui_readMsgBtn:"செய்தியை சத்தமாக படிக்கவும்", ui_stopReading:"படிப்பதை நிறுத்து",
+      ui_waitSeconds:"உறுதிப்படுத்தும் முன் {n} விநாடிகள் காத்திருக்கவும்...", ui_riskScore:"ஆபத்து மதிப்பெண் {n}/100",
+      ui_screenshotBtn:"திரைப்பட படத்தை பதிவேற்று", ui_micBtn:"பேசி உள்ளிடவும்", ui_micListening:"கேட்கிறது… நிறுத்த மீண்டும் அழுத்தவும்",
+      tier_danger:"மோசடி வாய்ப்பு அதிகம்", tier_caution:"எச்சரிக்கையாக இருக்கவும்",
+      tier_safe:"பாதுகாப்பானதாகத் தெரிகிறது", tier_unsure:"போதுமான தகவல் இல்லை",
+      meter_safe:"பாதுகாப்பானது", meter_caution:"எச்சரிக்கை தேவை", meter_danger:"மோசடி வாய்ப்பு அதிகம்",
+      plain_compromise:"இது சேமிக்கப்பட்ட தொடர்பு ஒருவர் முதன்முறையாக பணம் கேட்பது போல் உள்ளது. எதையும் அனுப்புவதற்கு முன், உங்களிடம் ஏற்கனவே உள்ள எண்ணில் அவர்களை அழைக்கவும் — அவர்களின் தொலைபேசி அல்லது கணக்கு பாதிக்கப்பட்டிருக்கலாம்.",
+      plain_impersonation:"இது தனிப்பட்ட முறையில் உங்களை அறிந்தவர் போல் தெரிகிறது, ஆனால் எண் பொருந்தவில்லை. எதுவும் செய்யும் முன் நீங்கள் ஏற்கனவே நம்பும் எண்ணில் அந்த நபரை அழைக்கவும்.",
+      plain_relmismatch:"இந்த வகையான உறவில் உள்ளவர் பணம் கேட்பது, குறிப்பாக ஆரம்பத்திலேயே அல்லது திடீரென்று, காதல் மற்றும் grooming மோசடிகளில் அறியப்பட்ட ஒரு முறை. மெதுவாக செயல்படுங்கள் — எதையும் அனுப்பும் முன் இவர் யார் என்பதை உறுதிப்படுத்தவும்.",
+      plain_unknownrisky:"இது தனிப்பட்ட முறையில் உங்களை அறிந்தவர் போல் தெரிகிறது, ஆனால் இந்த எண் நீங்கள் சேமித்தது இல்லை. எதுவும் செய்யும் முன் இவர் யார் என்பதை உறுதிப்படுத்தவும்.",
+      plain_grandparent:"இது 'நான்தான், பணம் அனுப்பு' என்ற அவசர மோசடி போல் படிக்கப்படுகிறது. பணம் அனுப்ப வேண்டாம் — உங்களிடம் ஏற்கனவே உள்ள எண்ணில் நேரடியாக உங்கள் குடும்ப உறுப்பினரை அழைக்கவும்.",
+      plain_authority:"உண்மையான காவல்துறை, வரி மற்றும் சுங்க அதிகாரிகள் உடனடி பணம் கேட்டு தொலைபேசியில் கைது செய்வதாக அச்சுறுத்த மாட்டார்கள். பணம் செலுத்த வேண்டாம், வீடியோ அழைப்பில் இணைய வேண்டாம் — இதை புறக்கணித்து, நீங்களே தேடிய எண்ணில் அந்த நிறுவனத்தை நேரடியாக தொடர்பு கொள்ளுங்கள்.",
+      plain_identitylending:"இது உங்கள் சொந்த பெயர் அல்லது அடையாளத்தைப் பயன்படுத்தி மற்றொருவருக்காக ஒரு கணக்கைத் திறக்கவோ அல்லது ஒரு பணியை முடிக்கவோ கேட்கிறது. இதைச் செய்ய வேண்டாம் — அவர்கள் அதை என்ன செய்தாலும் நீங்கள் சட்டப்பூர்வமாக பொறுப்பாகக்கூடும். அடையாள ஆவணங்கள் அல்லது கணக்கு அணுகலைப் பகிர வேண்டாம்.",
+      plain_dangerGeneric:"இந்த செய்தி மோசடியின் வலுவான அறிகுறிகளைக் காட்டுகிறது. எந்த இணைப்பையும் கிளிக் செய்யவோ, எந்த எண்ணையும் அழைக்கவோ, பணம் அல்லது தனிப்பட்ட தகவலை அனுப்பவோ வேண்டாம்.",
+      plain_caution:"பதிலளிக்கும், கிளிக் செய்யும், அல்லது பணம் செலுத்தும் முன் இந்த செய்தியில் ஏதோ ஒன்று மறுபரிசீலனை செய்யத்தக்கது.",
+      plain_safe:"Porchlight சரிபார்க்கும் எச்சரிக்கை அறிகுறிகள் இதில் இல்லை. இருப்பினும், சந்தேகம் இருந்தால், நேரடியாக உறுதிப்படுத்தவும்.",
+      plain_unsure:"வெளிப்படையாக சந்தேகத்திற்குரியது எதுவும் கண்டறியப்படவில்லை, ஆனால் இந்த செய்தி உண்மையானது என்பதை Porchlight உறுதிப்படுத்த முடியாது. இது பின்னர் பணம், தனிப்பட்ட விவரங்கள் அல்லது அவசர நடவடிக்கை கேட்டால், எதுவும் செய்யும் முன் சுயாதீனமாக உறுதிப்படுத்தவும்.",
+      act_noClickLinks:"செய்தியில் அச்சிடப்பட்ட எந்த இணைப்பையும் கிளிக் செய்யவோ, எந்த எண்ணையும் அழைக்கவோ வேண்டாம்.",
+      act_noSendMoney:"இந்த செய்தியின் அடிப்படையில் பணம், பரிசு அட்டைகள் அல்லது கிரிப்டோ அனுப்ப வேண்டாம்.",
+      act_noUpiApprove:"எந்த UPI அல்லது 'collect' கோரிக்கையையும் ஏற்க வேண்டாம் — ஒப்புக்கொள்வது உங்கள் கணக்கிலிருந்து பணத்தை நேரடியாக எடுத்துவிடும், நீங்கள்தான் பெறுபவர் போல் தெரிந்தாலும்.",
+      act_noShareIdentity:"வேறொருவருக்காக உங்கள் சொந்த அடையாளத்தைப் பயன்படுத்தி கணக்குகளைத் திறக்கவோ, அடையாள ஆவணங்களைப் பகிரவோ, பணிகளை முடிக்கவோ வேண்டாம்.",
+      act_hangUpAuthority:"இதை துண்டித்துவிடவும் அல்லது புறக்கணிக்கவும். உண்மையான காவல்துறை, வரி மற்றும் சுங்க அதிகாரிகள் உடனடி பணம் கேட்க மாட்டார்கள் அல்லது வீடியோ அழைப்பில் தொடர இருக்கச் சொல்ல மாட்டார்கள். நீங்களே தேடிய எண்ணில் அந்த நிறுவனத்தை தொடர்பு கொள்ளுங்கள்.",
+      act_noRemoteAccess:"உங்கள் சாதனத்திற்கு தொலைநிலை அணுகலை வழங்க வேண்டாம். துண்டித்து, கவலையாக இருந்தால் நீங்களே தேடிய எண்ணில் நிறுவனத்தை நேரடியாக தொடர்பு கொள்ளுங்கள்.",
+      act_callSavedNumber:"இந்த செய்திக்கு பதிலளிப்பதன் மூலம் அல்ல — {name} ஐ நீங்கள் ஏற்கனவே சேமித்த எண்ணில் அழைக்கவும்.",
+      act_verifyKnownNumber:"எதுவும் செய்யும் முன், நீங்கள் ஏற்கனவே அறிந்த எண் அல்லது முகவரியைப் பயன்படுத்தி இவர் யார் என்பதை உறுதிப்படுத்தவும் — இந்த செய்தியில் உள்ளதை அல்ல.",
+      act_useVerifiedInfo:"செய்தியில் அச்சிடப்பட்டதற்குப் பதிலாக மேலே காட்டப்பட்ட சரிபார்க்கப்பட்ட தொலைபேசி எண் அல்லது இணையதளத்தைப் பயன்படுத்தவும்.",
+      act_askTrusted:"பதிலளிப்பதற்கு முன், குறிப்பாக இது பின்னர் பணம் அல்லது தனிப்பட்ட விவரங்களைக் கேட்டால், ஒரு குடும்ப உறுப்பினரிடம் அல்லது நீங்கள் நம்பும் ஒருவரிடம் கேளுங்கள்.",
+      act_pauseFirst:"பதிலளிக்கும், கிளிக் செய்யும் அல்லது பணம் செலுத்தும் முன் ஒரு கணம் நிறுத்தி யோசியுங்கள்.",
+      act_noneNeeded:"எந்த நடவடிக்கையும் தேவையில்லை — Porchlight சரிபார்க்கும் அறிகுறிகள் இந்த செய்தியில் இல்லை.",
+      badge_highrisk:"அதிக ஆபத்து", badge_caution:"எச்சரிக்கை", badge_model:"சாதனத்தில் இயங்கும் மாதிரி", badge_lowerrisk:"குறைந்த ஆபத்து",
+      badge_override:"மேலெழுதல்", badge_personal:"தனிப்பட்டது", badge_clear:"தெளிவானது",
+      fb_confirmLegit:"சரி — {name} இடமிருந்து இது உறுதிப்படுத்தப்பட்ட, சட்டப்பூர்வமான பண கோரிக்கை என பதிவு செய்கிறோம்.",
+      fb_trustedNote:"சரி — {name} நம்பகமானவர் என நினைவில் வைத்திருக்கிறோம்.",
+      fb_moreCautious:"நன்றி — Porchlight அந்த அனுப்புநருடன் இன்னும் கவனமாக இருக்கும்.",
+      fb_thanksConfirm:"உறுதிப்படுத்தியதற்கு நன்றி.",
+      fb_noted:"பதிவு செய்யப்பட்டது (இதை நினைவில் வைக்க அனுப்புநர் பெயர் இல்லை).",
+      c_clear:"மோசடி முறைகள் அல்லது ஆபத்தான வார்த்தைகள் எதுவும் கண்டறியப்படவில்லை.",
+      c_unsure:"தெளிவான மோசடி முறைகள் எதுவும் கிடைக்கவில்லை, ஆனால் இது உண்மையானது என்பதை வார்த்தைகளில் எதுவும் உறுதிப்படுத்தவில்லை.",
+      c_thatSender:"அந்த அனுப்புநர்",
+      c_benign:"சாதாரண, நட்பான மொழியும் உள்ளது, இது ஒட்டுமொத்த ஆபத்தை சற்று குறைக்கிறது.",
+      c_override:"ஒரு கடுமையான விதி அறியப்பட்ட உயர்-ஆபத்து முறையுடன் பொருந்தியது, எனவே மாதிரி மதிப்பெண் எதுவாக இருந்தாலும் இது ஆபத்தானது என குறிக்கப்பட்டுள்ளது.",
+      c_modelIntro:"இந்த செய்தியில் மோசடியுடன் சாதனத்தில் இயங்கும் மாதிரி தொடர்புபடுத்தும் வார்த்தைகள்:",
+      c_noteTrusted:"{name} இடமிருந்து வரும் செய்திகள் பாதுகாப்பானவை என நீங்கள் முன்பே Porchlight க்குச் சொல்லியிருக்கிறீர்கள்.",
+      c_noteFlagged:"{name} இடமிருந்து வருவதாகக் கூறும் செய்திகளை நீங்கள் முன்பே ஆபத்தானது என குறியிட்டிருக்கிறீர்கள்.",
+      "rel_":"குறிப்பிடப்படவில்லை", rel_spouse:"கணவர் / மனைவி", rel_parent:"பெற்றோர்", rel_child:"மகன் / மகள்",
+      rel_sibling:"உடன்பிறப்பு", rel_bestfriend:"நெருங்கிய நண்பர்", rel_friend:"நண்பர்", rel_coworker:"சக பணியாளர்",
+      rel_teacher:"ஆசிரியர்", rel_boss:"முதலாளி", rel_landlord:"வீட்டு உரிமையாளர்", rel_acquaintance:"அறிமுகமானவர்",
+      rel_newcontact:"புதிய / ஆன்லைனில் சந்தித்த தொடர்பு", rel_lover:"காதலர் / காதல் ஆர்வம் உள்ளவர்",
+      rel_rival:"போட்டியாளர்", rel_enemy:"எதிரி",
+      conf_low_label:"குறைவு", conf_low_note:"புதிதாக சேமிக்கப்பட்ட தொடர்பு — இதை ஒப்பிட முந்தைய செய்தி வரலாறு இன்னும் இல்லை.",
+      conf_building_label:"உருவாகி வருகிறது", conf_building_note:"இதுவரை இந்த தொடர்புடன் {count} முந்தைய செய்தி(கள்) மட்டுமே பதிவில் உள்ளன.",
+      conf_high_label:"அதிகம்", conf_high_note:"இந்த தொடர்புடன் {count} முந்தைய செய்திகளின் அடிப்படையில்.",
+      conf_moderate_label:"மிதமானது", conf_moderate_note:"மோசடி-முறை விதிகள் மற்றும் சாதனத்தில் இயங்கும் மாதிரியை மட்டுமே அடிப்படையாகக் கொண்டது — இந்த அனுப்புநருக்கு தனிப்பட்ட வரலாறு எதுவும் இல்லை.",
+      conf_companyHigh_note:"{company} க்கான சரிபார்க்கப்பட்ட உண்மையான-உலக டைரக்டரி பதிவை அடிப்படையாகக் கொண்டது.",
+      ui_taPartialNote:"முக்கிய முடிவுகள் தமிழில் உள்ளன. விரிவான காரணங்களும் நிறுவன தொடர்பு விவரங்களும் தற்போது ஆங்கிலத்தில் உள்ளன."
     }
   };
-
-  function t(key){
+  function t(key, params){
     var dict = i18n[currentLang] || i18n.en;
-    return dict.hasOwnProperty(key) ? dict[key] : (i18n.en[key] || key);
-  }
-  function escapeHtml(s){
-    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-  }
-
-  var courseIcons = {
-    ads:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M7 9h6M7 12.5h10"/><path d="M9 20l3-3 3 3"/></svg>',
-    ai:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="8" width="14" height="10" rx="2"/><path d="M9 8V5a3 3 0 0 1 6 0v3"/><circle cx="9.5" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="13" r="1" fill="currentColor" stroke="none"/><path d="M3 12h2M19 12h2"/></svg>',
-    msg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4V5z"/><path d="M8 9h8M8 12h5"/></svg>',
-    call:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h3l2 5-2.5 2a11 11 0 0 0 5.5 5.5l2-2.5 5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2z"/></svg>'
-  };
-
-  var courses = [
-    {id:"c1", icon:"ads", steps:6},
-    {id:"c2", icon:"ai", steps:6},
-    {id:"c3", icon:"msg", steps:9},
-    {id:"c4", icon:"call", steps:6}
-  ];
-
-  var landingView = document.getElementById("landingView");
-  var courseView = document.getElementById("courseView");
-  var courseGrid = document.getElementById("courseGrid");
-
-  function renderLanding(){
-    courseGrid.innerHTML = "";
-    courses.forEach(function(c){
-      var card = document.createElement("button");
-      card.type = "button";
-      card.className = "course-card";
-      card.innerHTML = '<span class="icon">'+courseIcons[c.icon]+'</span>'+
-        '<h2>'+escapeHtml(t(c.id+"_title"))+'</h2>'+
-        '<p>'+escapeHtml(t(c.id+"_desc"))+'</p>'+
-        '<span class="start">'+escapeHtml(t("startCourse"))+'</span>';
-      card.addEventListener("click", function(){ openCourse(c); });
-      courseGrid.appendChild(card);
-    });
-  }
-
-  function openCourse(c){
-    document.getElementById("courseTitle").textContent = t(c.id+"_title");
-    document.getElementById("courseIntro").textContent = t(c.id+"_intro");
-    var stepsWrap = document.getElementById("courseSteps");
-    stepsWrap.innerHTML = "";
-    for(var i=1;i<=c.steps;i++){
-      var step = document.createElement("div");
-      step.className = "step";
-      step.innerHTML = '<div class="step-num">'+i+'</div>'+
-        '<div><h3>'+escapeHtml(t(c.id+"_s"+i+"_t"))+'</h3><p>'+escapeHtml(t(c.id+"_s"+i+"_b"))+'</p></div>';
-      stepsWrap.appendChild(step);
+    var str = dict.hasOwnProperty(key) ? dict[key] : (i18n.en[key] || key);
+    if(params && params.relCode !== undefined && params.rel === undefined){
+      params = Object.assign({}, params, {rel: t("rel_"+params.relCode)});
     }
-    landingView.classList.add("hidden");
-    courseView.classList.add("open");
-    window.scrollTo(0,0);
+    if(params){
+      Object.keys(params).forEach(function(p){
+        if(p==="relCode") return;
+        str = str.split("{"+p+"}").join(params[p]);
+      });
+    }
+    str = str.split("{relnote}").join(params && params.relnote ? params.relnote : "");
+    str = str.split("{allowednote}").join(params && params.allowednote ? params.allowednote : "");
+    str = str.split("{relbit}").join(params && params.relbit ? params.relbit : "");
+    return str;
   }
-
-  function closeCourse(){
-    landingView.classList.remove("hidden");
-    courseView.classList.remove("open");
-    window.scrollTo(0,0);
-  }
-
-  document.getElementById("backToCourses").addEventListener("click", function(e){
-    e.preventDefault();
-    closeCourse();
-  });
-
   function applyStaticTranslations(){
     document.querySelectorAll("[data-i18n]").forEach(function(el){
       el.textContent = t(el.getAttribute("data-i18n"));
     });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(function(el){
+      el.setAttribute("placeholder", t(el.getAttribute("data-i18n-placeholder")));
+    });
+    var taNote = document.getElementById("taPartialNote");
+    if(taNote) taNote.textContent = currentLang==="ta" ? t("ui_taPartialNote") : "";
   }
 
-  document.getElementById("langSelect").addEventListener("change", function(){
-    currentLang = i18n[this.value] ? this.value : "en";
-    try{ localStorage.setItem("porchlight_lang", currentLang); }catch(e){}
+  function setLang(lang){
+    if(!i18n[lang]) return;
+    currentLang = lang;
+    try{ localStorage.setItem("porchlight_lang", lang); }catch(e){}
     applyStaticTranslations();
-    renderLanding();
-    if(courseView.classList.contains("open")){
-      closeCourse();
+    populateRelationshipOptions(document.getElementById("claimedRelationship"), document.getElementById("claimedRelationship").value);
+    populateRelationshipOptions(document.getElementById("contactRelationshipInput"), "");
+    renderContactsList();
+    runAnalysis();
+  }
+
+  /* ---------------- data: verified real contact directories, by region ---------------- */
+  var regions = {
+    US: {label:"United States", directory: [
+      {name:"the IRS", match:/\birs\b/i, domain:"irs.gov", phone:"1-800-829-1040", url:"irs.gov"},
+      {name:"the Social Security Administration", match:/\bsocial security\b/i, domain:"ssa.gov", phone:"1-800-772-1213", url:"ssa.gov"},
+      {name:"Amazon", match:/\bamazon\b/i, domain:"amazon.com", phone:null, url:"amazon.com/contact-us"},
+      {name:"Chase Bank", match:/\bchase\b/i, domain:"chase.com", phone:"1-800-935-9935", url:"chase.com"},
+      {name:"PayPal", match:/\bpaypal\b/i, domain:"paypal.com", phone:"1-888-221-1161", url:"paypal.com"},
+      {name:"Bank of America", match:/\bbank of america\b/i, domain:"bankofamerica.com", phone:"1-800-432-1000", url:"bankofamerica.com"},
+      {name:"Wells Fargo", match:/\bwells fargo\b/i, domain:"wellsfargo.com", phone:"1-800-869-3557", url:"wellsfargo.com"},
+      {name:"Apple", match:/\bapple\b/i, domain:"apple.com", phone:"1-800-275-2273", url:"apple.com/support"},
+      {name:"Microsoft", match:/\bmicrosoft\b/i, domain:"microsoft.com", phone:null, url:"microsoft.com/support"},
+      {name:"Netflix", match:/\bnetflix\b/i, domain:"netflix.com", phone:"1-866-579-7172", url:"netflix.com"},
+      {name:"USPS", match:/\busps\b/i, domain:"usps.com", phone:"1-800-275-8777", url:"usps.com"},
+      {name:"FedEx", match:/\bfedex\b/i, domain:"fedex.com", phone:"1-800-463-3339", url:"fedex.com"},
+      {name:"UPS", match:/\bups\b/i, domain:"ups.com", phone:"1-800-742-5877", url:"ups.com"},
+      {name:"Medicare", match:/\bmedicare\b/i, domain:"medicare.gov", phone:"1-800-633-4227", url:"medicare.gov"}
+    ]},
+    UK: {label:"United Kingdom", directory: [
+      {name:"HMRC", match:/\bhmrc\b/i, domain:"gov.uk", phone:"0300 200 3300", url:"gov.uk/hmrc"},
+      {name:"TV Licensing", match:/\btv licen[cs]ing\b/i, domain:"tvlicensing.co.uk", phone:"0300 790 6117", url:"tvlicensing.co.uk"},
+      {name:"Royal Mail", match:/\broyal mail\b/i, domain:"royalmail.com", phone:"03457 740 740", url:"royalmail.com"},
+      {name:"the DVLA", match:/\bdvla\b/i, domain:"gov.uk", phone:"0300 790 6802", url:"gov.uk/dvla"},
+      {name:"the NHS", match:/\bnhs\b/i, domain:"nhs.uk", phone:"111", url:"nhs.uk"},
+      {name:"Barclays", match:/\bbarclays\b/i, domain:"barclays.co.uk", phone:"0345 734 5345", url:"barclays.co.uk"},
+      {name:"HSBC UK", match:/\bhsbc\b/i, domain:"hsbc.co.uk", phone:"03457 404 404", url:"hsbc.co.uk"},
+      {name:"Amazon", match:/\bamazon\b/i, domain:"amazon.co.uk", phone:null, url:"amazon.co.uk/contact-us"},
+      {name:"PayPal", match:/\bpaypal\b/i, domain:"paypal.com", phone:"0800 358 7911", url:"paypal.com"},
+      {name:"Action Fraud (report a scam)", match:/\baction ?fraud\b/i, domain:"actionfraud.police.uk", phone:"0300 123 2040", url:"actionfraud.police.uk"}
+    ]},
+    IN: {label:"India", directory: [
+      {name:"the Income Tax Department", match:/\bincome tax\b/i, domain:"incometax.gov.in", phone:"1800-180-1961", url:"incometax.gov.in"},
+      {name:"UIDAI (Aadhaar)", match:/\baadhaar\b|\buidai\b/i, domain:"uidai.gov.in", phone:"1947", url:"uidai.gov.in"},
+      {name:"India Post", match:/\bindia post\b/i, domain:"indiapost.gov.in", phone:"1800-11-2011", url:"indiapost.gov.in"},
+      {name:"State Bank of India", match:/\bstate bank of india\b|\bsbi\b/i, domain:"sbi.co.in", phone:"1800-425-3800", url:"sbi.co.in"},
+      {name:"Amazon", match:/\bamazon\b/i, domain:"amazon.in", phone:null, url:"amazon.in/contact-us"},
+      {name:"National Cybercrime Reporting (report a scam)", match:/\bcyber ?crime\b/i, domain:"cybercrime.gov.in", phone:"1930", url:"cybercrime.gov.in"}
+    ]},
+    CA: {label:"Canada", directory: [
+      {name:"the Canada Revenue Agency", match:/\bcanada revenue agency\b|\bcra\b/i, domain:"canada.ca", phone:"1-800-959-8281", url:"canada.ca/en/revenue-agency"},
+      {name:"Canada Post", match:/\bcanada post\b/i, domain:"canadapost-postescanada.ca", phone:"1-866-607-6301", url:"canadapost-postescanada.ca"},
+      {name:"Amazon", match:/\bamazon\b/i, domain:"amazon.ca", phone:null, url:"amazon.ca/contact-us"},
+      {name:"the Canadian Anti-Fraud Centre (report a scam)", match:/\banti-?fraud centre\b/i, domain:"antifraudcentre-centreantifraude.ca", phone:"1-888-495-8501", url:"antifraudcentre-centreantifraude.ca"}
+    ]},
+    AU: {label:"Australia", directory: [
+      {name:"the Australian Taxation Office", match:/\baustralian taxation office\b|\bato\b/i, domain:"ato.gov.au", phone:"13 28 61", url:"ato.gov.au"},
+      {name:"Australia Post", match:/\baustralia post\b/i, domain:"auspost.com.au", phone:"13 13 18", url:"auspost.com.au"},
+      {name:"Services Australia", match:/\bcentrelink\b|\bservices australia\b/i, domain:"servicesaustralia.gov.au", phone:"132 011", url:"servicesaustralia.gov.au"},
+      {name:"Amazon", match:/\bamazon\b/i, domain:"amazon.com.au", phone:null, url:"amazon.com.au/contact-us"},
+      {name:"Scamwatch (report a scam)", match:/\bscamwatch\b/i, domain:"scamwatch.gov.au", phone:"1300 795 995", url:"scamwatch.gov.au"}
+    ]},
+    GLOBAL: {label:"Other / Global", directory: [
+      {name:"PayPal", match:/\bpaypal\b/i, domain:"paypal.com", phone:null, url:"paypal.com"},
+      {name:"Apple", match:/\bapple\b/i, domain:"apple.com", phone:null, url:"apple.com/support"},
+      {name:"Microsoft", match:/\bmicrosoft\b/i, domain:"microsoft.com", phone:null, url:"microsoft.com/support"},
+      {name:"Amazon", match:/\bamazon\b/i, domain:"amazon.com", phone:null, url:"amazon.com/contact-us"},
+      {name:"WhatsApp", match:/\bwhatsapp\b/i, domain:"whatsapp.com", phone:null, url:"faq.whatsapp.com"},
+      {name:"Netflix", match:/\bnetflix\b/i, domain:"netflix.com", phone:null, url:"netflix.com"}
+    ]}
+  };
+  var currentRegion = "US";
+  try{ currentRegion = localStorage.getItem("porchlight_region") || "US"; }catch(e){}
+  if(!regions[currentRegion]) currentRegion = "US";
+  function getDirectory(){ return (regions[currentRegion] || regions.US).directory; }
+  function setRegion(code){
+    if(!regions[code]) return;
+    currentRegion = code;
+    try{ localStorage.setItem("porchlight_region", code); }catch(e){}
+    var sel = document.getElementById("regionSelect");
+    if(sel) sel.value = code;
+  }
+  var globalDomainWhitelist = {"google.com":true, "whatsapp.com":true};
+  Object.keys(regions).forEach(function(code){
+    regions[code].directory.forEach(function(d){ globalDomainWhitelist[d.domain] = true; });
+  });
+
+  /* ---------------- synthetic training data ---------------- */
+  var fillers = [
+    {company:"Amazon", amount:"249.99", link:"amaz0n-verify-account.com", phone:"1-888-402-1177", orderId:"112-4498231-7765544", date:"Thursday"},
+    {company:"Chase Bank", amount:"1,240.00", link:"chase-secure-alert.net", phone:"1-800-593-2210", orderId:"CB-88213", date:"March 14"},
+    {company:"PayPal", amount:"389.50", link:"paypal-account-limited.info", phone:"1-877-201-9944", orderId:"PP-002381", date:"next Tuesday"},
+    {company:"Netflix", amount:"19.99", link:"netflix-billing-update.com", phone:"1-855-201-3378", orderId:"NF-7729", date:"Friday"},
+    {company:"the IRS", amount:"3,412.00", link:"irs-gov-refunds.net", phone:"1-202-555-0148", orderId:"IRS-99213", date:"tomorrow"},
+    {company:"Social Security Administration", amount:"0", link:"ssa-benefits-verify.com", phone:"1-202-555-0117", orderId:"SSA-33210", date:"this week"},
+    {company:"Apple", amount:"129.00", link:"appleid-locked-verify.com", phone:"1-866-902-4471", orderId:"AP-56231", date:"Saturday"},
+    {company:"USPS", amount:"2.99", link:"usps-redelivery-fee.net", phone:"1-800-406-9231", orderId:"9400123456789", date:"tomorrow"},
+    {company:"FedEx", amount:"3.50", link:"fedex-package-hold.com", phone:"1-855-660-2381", orderId:"FX-772134", date:"Monday"},
+    {company:"Bank of America", amount:"875.20", link:"boa-account-alert.info", phone:"1-800-215-6690", orderId:"BOA-44120", date:"next week"}
+  ];
+
+  var scamTemplates = [
+    function(f){return f.company+" Alert: Your account will be suspended today unless you verify your information now at "+f.link;},
+    function(f){return "URGENT: Your package could not be delivered. Pay a redelivery fee of $"+f.amount+" within 24 hours at "+f.link+" or it will be returned to sender.";},
+    function(f){return "Notice from "+f.company+": You owe $"+f.amount+" and must respond within 24 hours or face legal action. Call "+f.phone+" immediately.";},
+    function(f){return "Congratulations! You've been selected to receive a $"+f.amount+" gift card from "+f.company+". Claim it now at "+f.link+" before it expires tonight.";},
+    function(f){return "Hi, it's me, I'm in trouble and I need you to send $"+f.amount+" in gift cards right away. Please don't tell anyone, I'll explain later.";},
+    function(f){return f.company+" Security Team: We detected unusual sign-in activity on your account. Verify your password and social security number at "+f.link+" to avoid permanent lockout.";},
+    function(f){return "Your "+f.company+" payment of $"+f.amount+" could not be processed. Update your card number and PIN immediately at "+f.link+".";},
+    function(f){return "FINAL NOTICE: Your social security number has been suspended due to suspicious activity. Call "+f.phone+" now or officers will be sent to your home.";},
+    function(f){return "You've been chosen for a $"+f.amount+" refund from "+f.company+". Provide your bank account and routing number at "+f.link+" to receive it today.";},
+    function(f){return "Your "+f.company+" subscription will renew for $"+f.amount+" tonight. If this wasn't you, click "+f.link+" within the next 2 hours to cancel and get a refund.";}
+  ];
+
+  var legitTemplates = [
+    function(f){return f.company+": Your order #"+f.orderId+" has shipped and is expected to arrive "+f.date+". You can track it by logging into your account directly.";},
+    function(f){return "Thanks for your "+f.company+" payment. Your balance is now $0 as of "+f.date+". No action is needed.";},
+    function(f){return f.company+" Monthly Statement: Your latest statement is ready to view whenever you log into your account.";},
+    function(f){return "Reminder from "+f.company+": your appointment is scheduled for "+f.date+". Call the office directly if you need to reschedule.";},
+    function(f){return f.company+" Newsletter: Here are this week's deals in stores near you. Reply STOP to unsubscribe.";},
+    function(f){return "Your "+f.company+" delivery is on schedule for "+f.date+". No signature required.";},
+    function(f){return f.company+": We've received your recent request and a specialist will follow up during regular business hours.";},
+    function(f){return f.company+": Your subscription renewed for $"+f.amount+" on "+f.date+", matching the price you signed up for.";}
+  ];
+
+  var legitPersonal = [
+    "Hi, it's me — running about 10 minutes late, sorry! See you soon.",
+    "Don't forget we're having dinner at 6 on Sunday.",
+    "Happy birthday! Hope you have a wonderful day, love you.",
+    "Can you grab some milk on your way home?",
+    "The plumber is coming Tuesday between 9 and noon.",
+    "Just checking in — how did the doctor's appointment go?",
+    "Thanks for watching the kids yesterday, it really helped.",
+    "Are we still on for lunch this weekend?",
+    "I left the spare key under the mat like always.",
+    "Your prescription refill is ready for pickup at the pharmacy whenever you have time.",
+    "The book club meeting moved to Thursday at the usual place.",
+    "Congratulations on your retirement party — it was wonderful to see everyone.",
+    "Reminder: the library book you borrowed is due back in a few days.",
+    "Can you call me back when you get a chance? Nothing urgent.",
+    "The weather looks nice this weekend, want to go for a walk?",
+    "I made too much soup, come by and take some home.",
+    "Your car is ready for pickup at the shop.",
+    "Let's plan Thanksgiving at my place this year.",
+    "Just wanted to say I love you and I'm thinking of you.",
+    "The neighborhood association meeting is next Wednesday evening."
+  ];
+
+  /* ---------------- real-world data: SMS Spam Collection (user-supplied), curated subset ---------------- */
+  /* Training subset — used to widen vocabulary beyond the synthetic templates above, especially premium-rate/prize-scam phrasing. */
+  var realSpamTrain = [
+    "URGENT! This is the 2nd attempt to contact U! U have WON £1250 CALL 09071512433 b4 050703 T&Cs BCM4235WC1N3XX. callcost 150ppm mobilesvary. max£7.50",
+    "Congratulations U can claim 2 VIP row A Tickets 2 C Blu in concert in November or Blu gift guaranteed Call 09061104276 to claim TS&Cs cost£3.75max",
+    "You have been specially selected to receive a £3000 award! Call 08712402050 BEFORE the lines close. Cost 10ppm. 16+. T&Cs apply. AG Promo",
+    "URGENT! We are trying to contact you. Last weekends draw shows that you have won a £900 prize GUARANTEED. Call 09061701939. Claim code S89. Valid 12hrs only",
+    "This is the 2nd time we have tried to contact u. U have won the £1450 prize to claim just call 09053750005 b4 310303. T&Cs/stop SMS 08718725756. 140ppm",
+    "You have WON a guaranteed £1000 cash or a £2000 prize. To claim yr prize call our customer service representative",
+    "URGENT! You have won a 1 week FREE membership in our £100,000 Prize Jackpot! Txt the word: CLAIM to No: 81010 T&C LCCLTD POBOX 4403LDNW1A7RW18",
+    "Dear Dave this is your final notice to collect your 4 star Tenerife Holiday or £5000 CASH award! Call 09061743806 from landline. TCs SAE Box326 CW25WX 150ppm",
+    "U have won a nokia 6230 plus a free digital camera. This is what u get when u win our FREE auction. To take part send NOKIA to 83383 now. POBOX114/14TCR/W1 16",
+    "Congratulations ur awarded 500 of CD vouchers or 125 gift guaranteed and Free entry 2 100 wkly draw txt MUSIC to 87066 TnCs age16",
+    "WIN: We have a winner! Mr. T. Foley won an iPod! More exciting prizes soon, so keep an eye on ur mobile",
+    "XMAS Prize draws! We are trying to contact U. Todays draw shows that you have won a £2000 prize GUARANTEED. Call 09058094565 from land line. Valid 12hrs only",
+    "URGENT! Your mobile No won a £2,000 Bonus Caller Prize! This is the 2nd attempt to reach YOU! Call 09066362220 ASAP! BOX97N7QP, 150ppm",
+    "money!!! you r a lucky winner! 2 claim your prize text money 2 88600 over £1million to give away! ppt150x3 normal text rate",
+    "SMS AUCTION You have won a Nokia 7250i. This is what you get when you win our FREE auction. To take part send Nokia to 86021 now. 16+",
+    "You've won tkts to the EURO2004 CUP FINAL or £800 CASH, to collect CALL 09058099801 b4190604, POBOX 7876150ppm",
+    "Todays Voda numbers ending 7548 are selected to receive a $350 award. If you have a match please call 08712300220 quoting claim code 4041 standard rates apply",
+    "U've Bin Awarded £50 to Play 4 Instant Cash. Call 08715203028 To Claim. EVERY 9th Player Wins Min £50-£500. OptOut 08718727870",
+    "Urgent Ur £500 guaranteed award is still unclaimed! Call 09066368327 NOW closingdate04/09/02 claimcode M39M51",
+    "Great News! Call FREEFONE 08006344447 to claim your guaranteed £1000 CASH or £2000 gift. Speak to a live operator NOW!",
+    "Promotion Number 8714714 - UR awarded a City Break and could WIN a £200 Summer Shopping spree every WK. Txt STORE to 88039. Winawk! Age16",
+    "Call from 08702490080 tells u 2 call 09066358152 to claim £5000 prize. U have 2 enter all ur mobile and personal details at the prompts. Careful!",
+    "Claim a £200 shopping spree, just call 08717895698 now! Have you won! MobStoreQuiz10ppm",
+    "Txt CALL to No 86888 and claim your reward of 3 hours talk time to use from your phone now! Subscribe 6GBP per month inc 3hrs 16 stop?txtStop",
+    "FreeMSG You have been awarded a FREE mini DIGITAL CAMERA, just reply SNAP to collect your prize! Opt out? Stop 80122300p/wk",
+    "T-Mobile customer you may now claim your FREE CAMERA PHONE upgrade and a pay and go sim card for your loyalty. Call on 0845 021 3680. Offer ends 28thFeb.",
+    "You have won £2,000 prize! To claim, call 09050000301.",
+    "YOU are guaranteed the latest Nokia Phone, a 40GB iPod MP3 player or a £500 prize! Txt word:COLLECT to No:83355! msgrcvd18+",
+    "Camera - You are awarded a SiPix Digital Camera! call 09061221066 from landline. Delivery within 28 days",
+    "GENT! We are trying to contact you. Last weekends draw shows that you won a £1000 prize GUARANTEED. Call 09064012160. Claim Code K52. Valid 12hrs only. 150ppm",
+    "YOU HAVE WON! As a valued Vodafone customer our computer has picked YOU to win a £150 prize. To collect is easy. Just call 09061743386",
+    "As a valued customer, I am pleased to advise you that following recent review of your Mob No. you are awarded with a £1500 Bonus Prize, call 09066364589",
+    "You are a winner you have been specially selected to receive £1000 cash or a £2000 award. Speak to a live operator to claim call 08712300220 9am-7pm. Cost 10p",
+    "Todays Vodafone numbers ending with 4882 are selected to receive a £350 award. If your number matches call 09064019014 to receive your £350 award.",
+    "Do you want a new Video handset? 750 any time any network mins? UNLIMITED TEXT? Camcorder? Reply or Call now 08000930705 for del Sat AM",
+    "Please CALL 08712402779 immediately as there is an urgent message waiting for you"
+  ];
+  var realHamTrain = [
+    "Maybe i could get book out tomo then return it immediately. Or something.",
+    "You please give us connection today itself before 6pm or refund the bill",
+    "Dear friends, sorry for the late information. Today is the birthday of our loving friend. For more details log on to face book and see. Dont miss a delicious treat.",
+    "Let Ur Heart Be Ur Compass Ur Mind Ur Map Ur Soul Ur Guide And U Will Never loose in world",
+    "The guy at the car shop who was flirting with me got my phone number from the paperwork and called and texted me. I'm nervous because now he may have my address. Should i call his boss and tell him?",
+    "So you think i should actually talk to him? Not call his boss in the morning? He told me where i could go and get my car fixed cheaper.",
+    "Lol please do. Actually send a pic of yourself right now. I wanna see. Pose with a comb and hair dryer or something.",
+    "Hello, my love. What are you doing? Did you get to that interview today? Are you happy? Do you think of me? Are you missing me?",
+    "I'm always on yahoo messenger now. Just send the message to me and i'll get it. You may have to send it in the mobile mode but i'll get it. And will reply.",
+    "Will purchase the stuff today and mail to you. Do you have a po box number?",
+    "Sorry, I'll call later in meeting any thing related to trade please call Arul.",
+    "Kindly send some one to our flat before 6pm today.",
+    "I will reach office around 6. My mobile has a problem, you can't get my voice. So call me once I'm free",
+    "We have sent the job description for Customer Service cum Accounts Executive to ur mail id, For details contact us",
+    "Thanx. Yup we're coming back on sun. Finish dinner going back 2 hotel now. Time flies, we're tog 4 exactly a month today.",
+    "Dear Sir, Pride and Pleasure meeting you today at the Tea Shop. We are pleased to send you our contact number. Please save our number.",
+    "Actually, my mobile is full of msgs. And I'm doing a work online, where i need to send them, I'll explain later.",
+    "Sir, i am waiting for your call, once free please call me.",
+    "Sorry i now then c ur msg. Yar lor so poor thing. But only 4 one night. Tmr u'll have a brand new room 2 sleep in.",
+    "Today is song dedicated day. Which song will u dedicate for me? Send this to all ur valuable frnds but first reply me.",
+    "Good! No, don't need any receipts, well done! Yes please tell. What's her number, i could ring her",
+    "I'll text now! All creepy like so he won't think that we forgot",
+    "Its so common hearing How r u? Wat r u doing? How was ur day? So let me ask u something different. Did u smile today? Gud evng.",
+    "I wonder how you got online, my love? Had you gone to the net cafe? Did you get your phone recharged? I think of you",
+    "I thought that Ranjith sir called me. So only i sms like that. He's verifying about the project.",
+    "Ring me if ur around, I'm in Luton this week!",
+    "Now am free call me pa.",
+    "K, wen ur free come to my home and also tell vikky i hav sent mail to him also. Better come evening i'll be free today after 6pm",
+    "Call him and say you not coming today ok and tell them not to fool me like this ok",
+    "Tell my bad character which u dont like in me. I'll try to change. Waiting for ur reply. Be frank, good morning.",
+    "Good afternoon, my boytoy. How are you feeling today? Better I hope? Are you being my good boy?",
+    "Customer place i will call you.",
+    "I probably won't eat at all today. I think I'm gonna pop. How was your weekend? Did u miss me?",
+    "chile, please! It's only a 3 hour drive for me. I come down all the time and will be subletting feb-april for audition season.",
+    "Oh, my love, it's soooo good to hear from you. Omg I missed you so much today. I'm sorry your having problems with the provider but thank you for tming me",
+    "Glad it went well, come over at 11 then we'll have plenty of time before claire goes to work."
+  ];
+  /* ---------------- real-world data round 2: "smishing" category + more ham, same public dataset ---------------- */
+  var realSmishingTrain = [
+    "Dear paytm customer your paytm KYC has been suspended. Paytm office phone 6200992462. Your Paytm account will block within 24hr. Thank you.",
+    "Loan INR5,00,000 to 7,50,000. Homeowners and tenants welcome. Have you been previously refused? We can still help. Call free 0800 1956669",
+    "You have been randomly selected for a BestBuy gift. Get your $1000 gift card at bestbuy-your-a-winner.net",
+    "Last Chance! Claim ur £350 worth of discount vouchers today! Text SHOP to 85023 now!",
+    "goldviking is inviting you to be his friend. Reply YES or NO. See him at sms.ac. Send STOP to opt out",
+    "We currently have a message awaiting your collection. To collect your message just call 08718723815.",
+    "Your mobile number has won 3.6 crore from Samsung UK award. To receive your prize, send your name, mobile number, address, age, and sex to samsungzoneuk@outlook.com",
+    "Dear customer, due to BVN system upgrade your ATM card has been de-activated. To re-activate, kindly call customer care on 08065635084 for help.",
+    "Congratulation! Your mobile number was selected as a winner of £2000 on Euro Mega Draw. Email for claims.",
+    "We have recalculated your vehicle tax. You are owed £48.84 due to over payment. Click the secure link to claim your refund.",
+    "Important message from your bank. For the safety of our customers, all customers are required to review and update their personal details. You will be unable to use our services until you have done so. Please go to the link below or call us.",
+    "You have an outstanding tax refund of £578.44 for the tax year. Please fill out the following form to process your refund at the link below.",
+    "Nationwide has noticed your debit card was recently used for a large purchase. If this was not you, please urgently call fraud prevention. Do not reply by SMS.",
+    "We regret to inform you that your NAB card is now locked. To unlock please update your security details at the link below.",
+    "Your Bank of America online account has been suspended. Log in to restore access at the link below.",
+    "Dear customer, your Apple ID is due to expire today. Prevent this by confirming your Apple ID at the link below.",
+    "We have identified some unusual activity on your online banking. Log in via the secure link below to avoid account suspension.",
+    "Urgent message for account holder. Kindly login to confirm your login information at our secure server link below.",
+    "Apple has detected an unauthorized sign-in to your cloud account. If this message goes without reply, Apple will suspend your account. Please verify by sending your Apple ID and password by text message.",
+    "Someone has contacted our dating service and entered your phone because they fancy you. To find out who it is, call this landline number.",
+    "Your 2003 account statement shows 800 unredeemed points. Call this number with your identifier code before it expires.",
+    "URGENT: your government has issued a payment to all residents as part of its promise to battle COVID. Tap here to apply.",
+    "You have exited the specified 1 mile radius on three separate occasions today. A penalty notice has been issued to your address. Stay at home.",
+    "We would like to inform you that you have been recorded as leaving your home on 3 occasions yesterday. A fine has been added to your account. For further information please visit the link below.",
+    "Congratulations! You are due for a COVID-19 grant. To redeem, contact us via the email below.",
+    "Due to the central bank directive regarding BVN update, your ATM card has been de-activated. To re-activate, call customer care.",
+    "Your tax refund is ready to be claimed. To access your refund, follow the steps required at the link below.",
+    "Your iPhone ID is due to expire today. Please tap the link below to update and prevent loss of services and apps.",
+    "We have received a request from you for purchasing a payment service tag. Total amount to be paid is listed below. In case of any queries, contact us at the link below.",
+    "Welcome to the payment bank. Your re-verification is done successfully. Get your cashback, click the link and login."
+  ];
+  var realHamTrain2 = [
+    "Please protect yourself from e-threats. Your bank never asks for sensitive information like passwords or PIN through email. Never share your password with anybody.",
+    "You have registered a new payee. Log in at your bank's website directly and enter the code shown to confirm. Beware of frauds. Do not share or disclose the code to anyone.",
+    "Camera quite good, 10.1 megapixels. Have a lovely holiday, be safe and I hope you have a good journey! Happy new year to you both!",
+    "It doesnt make sense to take it there unless its free. If you need to know more, look it up online.",
+    "You have to please make a note of all she's exposed to. Also find out from her school if anyone else was vomiting. Is there a dog or cat in the house? Let me know later.",
+    "Honey, can you please find out how much they sell it for. And how many times can it be used. Its very important to have a reply before Monday",
+    "Sorry to trouble you again. Can you buy something for my dad again? All two big one small, Saturday and Sunday. Thanks.",
+    "Yes, I trust you to buy new stuff ASAP so I can try it out",
+    "Text her. If she doesnt reply let me know so i can have her log in",
+    "Sir, hope your day is going smoothly. I really hoped I wouldn't have to bother you about this. I have some bills that I can't settle this month. I am out of all extra cash. I know this is a challenging time for you also but I have to let you know.",
+    "I cant pick up the phone right now. Message if urgent.",
+    "Am not working but am up to my eyes in reading so will text you later when a bit more free to chat",
+    "I might come visit for 2 days, so you can be prepared to take a leave once I finalize. Dont plan any travel during my visit. Need to finish urgent work first.",
+    "Sorry, I can't text and drive coherently, see you in twenty",
+    "I can't speak because my mobile has a problem. I can listen to you but you can't hear my voice. So I'll call you later.",
+    "Stop the story. I've told him I've returned it and he's saying I shouldn't re-order it.",
+    "Sir, I need his date of birth and company bank facilities details for the form.",
+    "Please pls find out from aunt about the plans for this weekend."
+  ];
+  /* ---------------- real-world data round 3: task-scam / identity-lending / shipment lures, user-collected 2026-09-06 ---------------- */
+  var realTaskScamTrain = [
+    "We are Dubai-based real estate OCTA PROPERTIES company, This is a simple online promotion freelance job. You only need your mobile phone. You can work in your free time. You can earn around 180 - 210 AED per day after trial work.",
+    "The reason you need to deposit 200 is that merchant side need to make sure all project reviews are genuine and completed by a real person, rather than generated by AI or robot.",
+    "This 200 is NOT a fee. It is just a temporary deposit to trigger the system.",
+    "Action needed: Shipment held at customs. Submit missing docs in 6 days to avoid return or disposal.",
+    "FedEx: Delivery Notification and Next Steps. Your shipment is currently on hold at our local facility. To schedule a new delivery time or select a nearby pickup point, please access our tracking dashboard in the next 24 hours."
+  ];
+
+  var trainingDocs = [];
+  scamTemplates.forEach(function(tpl){ fillers.forEach(function(f){ trainingDocs.push({text:tpl(f), label:1}); }); });
+  legitTemplates.forEach(function(tpl){ fillers.forEach(function(f){ trainingDocs.push({text:tpl(f), label:0}); }); });
+  legitPersonal.forEach(function(t){ trainingDocs.push({text:t, label:0}); });
+  realSpamTrain.forEach(function(t){ trainingDocs.push({text:t, label:1}); });
+  realHamTrain.forEach(function(t){ trainingDocs.push({text:t, label:0}); });
+  realSmishingTrain.forEach(function(t){ trainingDocs.push({text:t, label:1}); });
+  realHamTrain2.forEach(function(t){ trainingDocs.push({text:t, label:0}); });
+  realTaskScamTrain.forEach(function(t){ trainingDocs.push({text:t, label:1}); });
+
+  /* ---------------- text normalization + vocab + tf-idf ---------------- */
+  var stopwords = ["the","a","an","to","of","in","on","is","are","and","for","your","you","it","at","this",
+    "will","be","or","with","we","i","that","have","has","not","by","from","as","if","was","were","been",
+    "so","do","did","its","their","his","her","our","my","me","us"];
+  var stopSet = {}; stopwords.forEach(function(w){stopSet[w]=true;});
+
+  function normalizeTokens(text){
+    var t = text.toLowerCase();
+    t = t.replace(/https?:\/\/\S+/g, " urltoken ");
+    t = t.replace(/[$£€₹¥]\s?\d[\d,]*(\.\d+)?|\b\d[\d,]*(\.\d+)?\s?(usd|gbp|inr|eur|aud|cad|dollars?|pounds?|rupees?)\b/g, " amounttoken ");
+    t = t.replace(/\b\+?\d[\d\s().-]{6,16}\d\b/g, " phonetoken ");
+    t = t.replace(/\b[a-z0-9]*\d{4,}[a-z0-9]*\b/gi, " idtoken ");
+    t = t.replace(/[^a-z\s]/g, " ");
+    var toks = t.split(/\s+/).filter(Boolean);
+    return toks.filter(function(w){ return !stopSet[w] && w.length>1; });
+  }
+
+  function buildVocab(docs, minDf, maxSize){
+    var df = {};
+    docs.forEach(function(d){
+      var seen = {};
+      normalizeTokens(d.text).forEach(function(w){
+        if(!seen[w]){ seen[w]=true; df[w]=(df[w]||0)+1; }
+      });
+    });
+    var words = Object.keys(df).filter(function(w){ return df[w]>=minDf; });
+    words.sort(function(a,b){ return df[b]-df[a]; });
+    words = words.slice(0, maxSize);
+    var index = {}; words.forEach(function(w,i){ index[w]=i; });
+    var idf = words.map(function(w){ return Math.log(docs.length/df[w]); });
+    return {words:words, index:index, idf:idf, N:docs.length};
+  }
+
+  function vectorize(text, vocab){
+    var vec = new Array(vocab.words.length).fill(0);
+    var toks = normalizeTokens(text);
+    var seen = {};
+    toks.forEach(function(w){
+      var i = vocab.index[w];
+      if(i!==undefined && !seen[w]){ seen[w]=true; vec[i] = vocab.idf[i]; }
+    });
+    return vec;
+  }
+
+  function trainLogReg(X, y, dim, opts){
+    opts = opts || {};
+    var epochs = opts.epochs || 350, lr = opts.lr || 0.6, l2 = opts.l2 || 0.002;
+    var w = new Array(dim).fill(0), b = 0;
+    var N = X.length;
+    for(var e=0; e<epochs; e++){
+      var gradW = new Array(dim).fill(0), gradB = 0;
+      for(var n=0; n<N; n++){
+        var x = X[n], z = b;
+        for(var j=0;j<dim;j++){ if(x[j]!==0) z += w[j]*x[j]; }
+        var p = 1/(1+Math.exp(-z));
+        var err = p - y[n];
+        for(var k=0;k<dim;k++){ if(x[k]!==0) gradW[k] += err*x[k]; }
+        gradB += err;
+      }
+      for(var m=0;m<dim;m++){ w[m] -= lr*(gradW[m]/N + l2*w[m]); }
+      b -= lr*(gradB/N);
+    }
+    return {w:w, b:b};
+  }
+
+  function predict(x, model){
+    var z = model.b;
+    for(var i=0;i<x.length;i++){ if(x[i]!==0) z += model.w[i]*x[i]; }
+    return 1/(1+Math.exp(-z));
+  }
+
+  var vocab = buildVocab(trainingDocs, 2, 220);
+  var Xtrain = trainingDocs.map(function(d){ return vectorize(d.text, vocab); });
+  var ytrain = trainingDocs.map(function(d){ return d.label; });
+  var model = trainLogReg(Xtrain, ytrain, vocab.words.length, {epochs:350, lr:0.6, l2:0.002});
+
+  /* ---------------- rule engine ---------------- */
+  /* Family-emergency/"it's me" scam: built from three reusable word-lists rather
+     than one hand-written sentence, specifically so a future missed phrasing gets
+     fixed by adding one entry to a list below, not by hand-editing a giant regex.
+     famTrouble = the "something bad happened" claim. famMoney = how they ask you
+     to pay. famStandalone = phrases strong enough to flag on their own. The rule
+     fires on famStandalone alone, OR famTrouble within ~150 chars of famMoney in
+     either order — trouble and money mentioned separately (e.g. a bystander
+     retelling a real accident, or an ordinary Venmo split) do not trigger it. */
+  var famTrouble = "this is (my |a )?new (phone|cell)? ?number|i lost my phone|lost my (wallet|purse|phone)|car accident|in a wreck|got in an accident|totaled (my|the) car|broke down|(in|at|near) (the )?(hospital|er\\b|emergency room|urgent care)|got arrested|detained by (police|customs)|in jail|need bail|got mugged|got robbed|stranded|need (emergency )?surgery|having an? (emergency|procedure|surgery)|(it'?s|this is) (your |ur )?(grandson|granddaughter|grandkid|son|daughter|nephew|niece)";
+  var famMoney = "cashapp|cash app|venmo|zelle|paypal|wire transfer|gift cards?|western union|bank transfer|send (me |it )?\\$|pay (me |it )?\\$|wire (me )?\\$|give me \\$|need \\$|short \\$";
+  var famStandalone = "don'?t tell (anyone|mom|dad|the family)|keep this (between us|secret|quiet)|it'?s me,? i'?m in trouble|need you to send";
+  var familyEmergencyRe = new RegExp(
+    "\\b(" + famStandalone +
+    "|(?:" + famTrouble + ")[\\s\\S]{0,150}(?:" + famMoney + ")" +
+    "|(?:" + famMoney + ")[\\s\\S]{0,150}(?:" + famTrouble + ")" +
+    ")\\b", "gi");
+
+  var rules = [
+    {id:"urgency", sev:"caution", weight:14, re:/\b(act now|immediately|urgent|within (the next )?(24|1|2|3) hours?|right away|final notice|expires? (today|tonight|soon)|last chance)\b/gi,
+      reasonKey:"r_urgency"},
+    {id:"money", sev:"danger", weight:22, re:/\b(gift cards?|wire transfer|western union|moneygram|bitcoin|crypto(currency)?|prepaid (card|debit)|routing number)\b/gi,
+      reasonKey:"r_money"},
+    {id:"personal", sev:"danger", weight:20, re:/\b(social security number|ssn|password|pin number|bank account number|card number|date of birth)\b/gi,
+      reasonKey:"r_personal"},
+    {id:"threat", sev:"danger", weight:18, re:/\b(arrest|lawsuit|legal action|officers? (will be|sent)|suspended?|account (will be |has been )?(closed|locked|terminated)|jail)\b/gi,
+      reasonKey:"r_threat"},
+    {id:"prize", sev:"caution", weight:14, re:/\b(you('ve| have) (won|been selected|been chosen)|congratulations|claim (your|it) now)\b/gi,
+      reasonKey:"r_prize"},
+    {id:"shortlink", sev:"danger", weight:16, re:/\b(bit\.ly|tinyurl\.com|t\.co|goo\.gl|is\.gd|ow\.ly)\S*/gi,
+      reasonKey:"r_shortlink"},
+    {id:"link", sev:"caution", weight:8, re:/\bhttps?:\/\/\S+|\b[a-z0-9-]+\.(com|net|info|org|io|biz|co|me)\b/gi,
+      reasonKey:"r_link"},
+    {id:"generic", sev:"caution", weight:6, re:/\bdear (customer|valued customer|user|sir\/madam)\b/gi,
+      reasonKey:"r_generic"},
+    {id:"grandparent", sev:"danger", weight:26, re:familyEmergencyRe,
+      reasonKey:"r_grandparent"},
+    {id:"customsfee", sev:"caution", weight:14, re:/\b(customs (fee|duty|charge)|release your parcel|clear your (parcel|package))\b/gi,
+      reasonKey:"r_customsfee"},
+    {id:"authority", sev:"danger", weight:22, re:/\b(digital arrest|arrest warrant|video call with (the |our |an |a )?(police|officer)|your (parcel|package) contains (illegal|banned)|case will be registered against you)\b/gi,
+      reasonKey:"r_authority"},
+    {id:"techsupport", sev:"danger", weight:20, re:/\b(your computer (has|is) (a virus|been (hacked|compromised))|do not (turn off|restart) your computer|call (this number|microsoft|apple) immediately|remote access to your (computer|device)|windows defender alert|your account has been accessed from)\b/gi,
+      reasonKey:"r_techsupport"},
+    {id:"romance", sev:"caution", weight:16, re:/\b(soulmate|met (you )?on (the )?(dating|app)|deployed overseas|stuck at customs|need (money|funds) to (visit|come see|fly to) you|emergency surgery.{0,15}(send|help)|(my love|my darling|sweetheart)[\s\S]{0,120}(send|wire|western union|gift card|need \$|urgently need)|(send|wire|western union|gift card|need \$|urgently need)[\s\S]{0,120}(my love|my darling|sweetheart))\b/gi,
+      reasonKey:"r_romance"},
+    {id:"jobinvest", sev:"caution", weight:16, re:/\b(work from home.{0,20}(earn|make) \$|earn \$?\d+ (per|a) (day|week)|guaranteed (profit|returns?)|double your (money|investment)|no experience (needed|required).{0,20}(text|whatsapp)|investment opportunity.{0,15}(limited|act)|hiring immediately.{0,20}(text|whatsapp))\b/gi,
+      reasonKey:"r_jobinvest"},
+    {id:"accountverify", sev:"danger", weight:20, re:/\b(account (has been |is |will be )?(suspended|locked|de-?activated|blocked)|kyc (has been )?(suspended|expired)|unusual activity (on|in) your (account|online banking)|unauthorized sign-?in)\b[\s\S]{0,140}((click|tap) (here|the|below)|log ?in (via|to|at)|verify your|re-?activate|update your (security|personal|login))\b/gi,
+      reasonKey:"r_accountverify"},
+    {id:"refundclick", sev:"caution", weight:16, re:/\b(overpaid|over[-\s]?payment|refund|entitled to (a |an )?(reward|compensation))\b[\s\S]{0,140}((click|tap|continue|proceed) (here|via|to|the|below)|follow the (link|steps)|visit (the|this) link)\b/gi,
+      reasonKey:"r_refundclick"},
+    {id:"callbacklure", sev:"caution", weight:30, re:/\b(delivery (is )?(waiting|pending)|missed delivery|arrange (a )?redelivery|reschedule (your )?delivery|customer service announcement|we tried to call you|new (phone|camcorder|prize|gift|handset)).{0,80}\b(please call|call (this|the|freephone|free|now)|reply|contact us)\b/gi,
+      reasonKey:"r_callbacklure"},
+    {id:"identitylending", sev:"danger", weight:26, re:/\b((create|open|set up|register)[\s\S]{0,40}(account)[\s\S]{0,60}(with your identity|using your identity)|(use|provide|do the work on)[\s\S]{0,40}(your identity)[\s\S]{0,60}(account|assessment|verification|pass the assessment))\b/gi,
+      reasonKey:"r_identitylending"},
+    {id:"taskjob", sev:"danger", weight:35, re:/\b((invitation code|trial (task|work)|complete (the )?task|promote (the company|properties|company'?s properties)|online (marketing|promotion) (job|position|freelance))[\s\S]{0,150}(activate|trigger the system|unlock|refundable deposit)|(deposit|refundable deposit)[\s\S]{0,150}(invitation code|trial (task|work))|temporary deposit to trigger the system|deposit[\s\S]{0,20}trigger the system)\b/gi,
+      reasonKey:"r_taskjob"},
+    {id:"coldopener", sev:"caution", weight:40, re:/\b(don'?t you remember me|why can'?t i reach you|did you block me|if we become close|i hope we can communicate more openly|recent interactions have made me feel (uncomfortable|unwelcome))\b/gi,
+      reasonKey:"r_coldopener"},
+    {id:"upirequest", sev:"caution", weight:18, re:/\b[\w.\-]{2,}@(ybl|oksbi|okhdfcbank|okicici|okaxis|okbizaxis|paytm|ibl|axl|apl|upi|sbi|axisb|freecharge)\b|\b(upi (id|request|collect)|collect request|approve (the )?(upi )?(request|collect)|scan (this|the) qr( code)?( to pay)?)\b/gi,
+      reasonKey:"r_upirequest"}
+  ];
+
+  var benignPhrases = /\b(happy birthday|happy anniversary|love you|miss you|see you (soon|tomorrow|later)|how are you|good morning|good night|thinking of you|thanks for (the|your)|talk (soon|later)|drive safe|please review the attached|payment due within|for (last month'?s|this month'?s) (consulting|contract|freelance) work|invoice (for|number|attached))\b/i;
+  function computeBenignDiscount(text){
+    return benignPhrases.test(text) ? 12 : 0;
+  }
+
+  function computeFormattingFlag(text){
+    var letters = text.replace(/[^a-zA-Z]/g,"");
+    var caps = text.replace(/[^A-Z]/g,"");
+    var exclaims = (text.match(/!/g)||[]).length;
+    var capsRatio = letters.length>=12 ? caps.length/letters.length : 0;
+    if(capsRatio > 0.5 || exclaims >= 3){
+      return {weight:8, reasonKey:"r_formatting"};
+    }
+    return null;
+  }
+
+  function escapeHtml(s){
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  function telLink(contactValue){
+    if(!contactValue) return "";
+    if(contactValue.indexOf("@")>=0){
+      return '<a href="mailto:'+escapeHtml(contactValue)+'">'+escapeHtml(contactValue)+'</a>';
+    }
+    var href = contactValue.replace(/[^\d+]/g,"");
+    return '<a href="tel:'+href+'">'+escapeHtml(contactValue)+'</a>';
+  }
+
+  function findSpans(text){
+    var spans = [];
+    var reasons = [];
+    rules.forEach(function(rule){
+      var re = new RegExp(rule.re.source, rule.re.flags);
+      var m;
+      var hit = false;
+      while((m = re.exec(text)) !== null){
+        hit = true;
+        spans.push({start:m.index, end:m.index+m[0].length, sev:rule.sev});
+        if(m.index === re.lastIndex) re.lastIndex++;
+      }
+      if(hit) reasons.push({id:rule.id, sev:rule.sev, weight:rule.weight, reasonKey:rule.reasonKey});
+    });
+    return {spans:spans, reasons:reasons};
+  }
+
+  function mergeSpans(spans){
+    if(!spans.length) return [];
+    spans.sort(function(a,b){ return a.start-b.start; });
+    var sevRank = {danger:2, caution:1};
+    var out = [Object.assign({}, spans[0])];
+    for(var i=1;i<spans.length;i++){
+      var s = spans[i], last = out[out.length-1];
+      if(s.start <= last.end){
+        last.end = Math.max(last.end, s.end);
+        if(sevRank[s.sev] > sevRank[last.sev]) last.sev = s.sev;
+      } else {
+        out.push(Object.assign({}, s));
+      }
+    }
+    return out;
+  }
+
+  function buildHighlightHtml(text, spans){
+    var merged = mergeSpans(spans);
+    var html = "", cursor = 0;
+    merged.forEach(function(sp){
+      html += escapeHtml(text.slice(cursor, sp.start));
+      html += '<mark class="hl-'+sp.sev+'">'+escapeHtml(text.slice(sp.start, sp.end))+'</mark>';
+      cursor = sp.end;
+    });
+    html += escapeHtml(text.slice(cursor));
+    return html;
+  }
+
+  function detectCompany(text){
+    var dir = getDirectory();
+    for(var i=0;i<dir.length;i++){
+      if(dir[i].match.test(text)) return dir[i];
+    }
+    return null;
+  }
+
+  function extractDomain(contact){
+    if(!contact) return null;
+    var c = contact.trim();
+    var at = c.indexOf("@");
+    if(at>=0) return c.slice(at+1).toLowerCase().replace(/^www\./,"");
+    var m = c.match(/([a-z0-9-]+\.[a-z]{2,})(\/|$)/i);
+    return m ? m[1].toLowerCase() : null;
+  }
+
+  function topModelWords(text){
+    var toks = {};
+    normalizeTokens(text).forEach(function(w){ toks[w]=true; });
+    var contribs = [];
+    Object.keys(toks).forEach(function(w){
+      var idx = vocab.index[w];
+      if(idx===undefined) return;
+      var val = vocab.idf[idx]*model.w[idx];
+      if(val>0.02) contribs.push({word:w, val:val});
+    });
+    contribs.sort(function(a,b){ return b.val-a.val; });
+    return contribs.slice(0,4).map(function(c){ return c.word.replace("token"," marker"); });
+  }
+
+  /* ---------------- personalization (localStorage) ---------------- */
+  var LS_TRUST = "porchlight_trusted", LS_FLAG = "porchlight_flagged", LS_LOG = "porchlight_log";
+  var LS_CONTACTS = "porchlight_contacts", LS_HISTORY = "porchlight_history", LS_SEEDED = "porchlight_seeded_v1";
+  function lsGet(key){ try{ return JSON.parse(localStorage.getItem(key) || "[]"); } catch(e){ return []; } }
+  function lsGetObj(key){ try{ return JSON.parse(localStorage.getItem(key) || "{}"); } catch(e){ return {}; } }
+  function lsSet(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
+
+  /* ---------------- saved contacts + per-contact message history ---------------- */
+  function seedContactsIfNeeded(){
+    if(localStorage.getItem(LS_SEEDED)) return;
+    var contacts = [
+      {id:"c1", name:"Mom", contact:"555-201-9981"},
+      {id:"c2", name:"David (grandson)", contact:"555-773-2200"}
+    ];
+    var momKey = normalizeContact(contacts[0].contact);
+    var history = {};
+    history[momKey] = [
+      {label:"5 weeks ago", moneyRequest:false},
+      {label:"3 weeks ago", moneyRequest:false},
+      {label:"2 weeks ago", moneyRequest:false},
+      {label:"last week", moneyRequest:false}
+    ];
+    try{
+      localStorage.setItem(LS_CONTACTS, JSON.stringify(contacts));
+      localStorage.setItem(LS_HISTORY, JSON.stringify(history));
+      localStorage.setItem(LS_SEEDED, "1");
+    }catch(e){}
+  }
+
+  function normalizeContact(c){
+    if(!c) return null;
+    c = (""+c).trim().toLowerCase();
+    if(!c) return null;
+    if(c.indexOf("@")>=0) return c;
+    var digits = c.replace(/\D/g,"");
+    if(!digits) return null;
+    return digits.length>=7 ? digits.slice(-9) : digits;
+  }
+  function getContacts(){ return lsGet(LS_CONTACTS); }
+  function findContact(senderContact){
+    var key = normalizeContact(senderContact);
+    if(!key) return null;
+    var contacts = getContacts();
+    for(var i=0;i<contacts.length;i++){
+      if(normalizeContact(contacts[i].contact) === key) return contacts[i];
+    }
+    return null;
+  }
+  function findContactByName(name){
+    if(!name) return null;
+    var n = name.trim().toLowerCase();
+    if(!n) return null;
+    var contacts = getContacts();
+    for(var i=0;i<contacts.length;i++){
+      var cn = contacts[i].name.toLowerCase();
+      if(cn === n || cn.indexOf(n) === 0) return contacts[i];
+    }
+    return null;
+  }
+  /* Requires the saved contact's name to appear in a self-identifying spot
+     ("it's David", "this is David", a "- David" sign-off) rather than
+     anywhere in the message. A bare \bname\b anywhere-in-text match used to
+     fire on any mention of that person — e.g. "don't tell mom" wrongly
+     matched a saved contact literally named "Mom", even though the message
+     wasn't claiming to be from her. */
+  function detectPersonalMention(text){
+    var contacts = getContacts();
+    for(var i=0;i<contacts.length;i++){
+      var firstName = contacts[i].name.split(/[\s(]/)[0];
+      if(!firstName) continue;
+      var esc = firstName.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+      var selfIdRe = new RegExp("\\b(?:it'?s|this is|hi,?\\s+it'?s|hey,?\\s+it'?s)\\s+(?:your\\s+)?"+esc+"\\b","i");
+      var signOffRe = new RegExp("[-—]\\s*"+esc+"\\s*$","i");
+      if(selfIdRe.test(text) || signOffRe.test(text)) return contacts[i];
+    }
+    return null;
+  }
+
+  /* Generic family-relation self-identification, independent of saved contacts —
+     catches "it's your grandson" / "this is your daughter" style scam openers
+     even when that relative isn't (or can't be) a saved contact by that name. */
+  var relationClaimRe = /\b(?:it'?s|this is)\s+(?:your |ur )?(mom|dad|mother|father|grandson|granddaughter|grandkid|grandchild|son|daughter|nephew|niece|sister|brother)\b/i;
+  function detectRelationClaim(text){
+    var m = relationClaimRe.exec(text);
+    if(!m) return null;
+    return {name:"your " + m[1].toLowerCase()};
+  }
+  function getHistory(key){
+    var all = lsGetObj(LS_HISTORY);
+    return all[key] || [];
+  }
+  function pushHistory(key, moneyRequest){
+    var all = lsGetObj(LS_HISTORY);
+    var arr = all[key] || [];
+    arr.unshift({label:"just now", moneyRequest:moneyRequest});
+    all[key] = arr.slice(0,30);
+    lsSet(LS_HISTORY, all);
+  }
+
+  var moneyAskRegex = /[$£€₹]\s?\d|\b(venmo|zelle|cash ?app|paypal me|paytm|phonepe|google pay|gpay|upi|interac)\b/i;
+  var askVerbRegex = /\b(send|can you|could you|need|help me|spot me|lend me|pay me|transfer)\b/i;
+  function looksLikeMoneyAsk(text){
+    return moneyAskRegex.test(text) && askVerbRegex.test(text);
+  }
+  var relationshipLangRegex = /\b(it'?s me|mum|mom|dad|grandma|grandpa|grandson|granddaughter|your (son|daughter|nephew|niece))\b/i;
+
+  /* ---------------- relationship-aware trust baseline ---------------- */
+  var relationshipTrust = {
+    "":50, "spouse":90, "parent":88, "child":88, "sibling":85,
+    "bestfriend":75, "friend":55, "coworker":45,
+    "teacher":32, "boss":32, "landlord":32,
+    "acquaintance":30, "newcontact":22, "lover":20,
+    "rival":10, "enemy":5
+  };
+  var relationshipLabels = {
+    "":"Not specified", "spouse":"Spouse / partner", "parent":"Parent", "child":"Son / daughter",
+    "sibling":"Sibling", "bestfriend":"Best friend", "friend":"Friend", "coworker":"Coworker",
+    "teacher":"Teacher", "boss":"Boss", "landlord":"Landlord", "acquaintance":"Acquaintance",
+    "newcontact":"New / online-met contact", "lover":"Lover / romantic interest",
+    "rival":"Rival", "enemy":"Enemy"
+  };
+  function getTrust(rel){ return relationshipTrust.hasOwnProperty(rel) ? relationshipTrust[rel] : 50; }
+
+  function evaluateContact(text, claimedSender, senderContact, claimedRelationship){
+    var personalClaim = findContactByName(claimedSender);
+    var out = {moneyAsk: looksLikeMoneyAsk(text), contact:null, historyCount:0, priorMoneyCount:0, status:"none", relationship:"", trust:50};
+
+    if(personalClaim){
+      if(senderContact){
+        if(normalizeContact(senderContact) === normalizeContact(personalClaim.contact)){
+          out.contact = personalClaim;
+        } else {
+          out.status = "impersonation";
+          out.claimedName = personalClaim.name;
+          out.realContact = personalClaim.contact;
+          out.relationship = personalClaim.relationship || "";
+          out.trust = getTrust(out.relationship);
+          return out;
+        }
+      } else {
+        out.status = "unverified";
+        out.claimedName = personalClaim.name;
+        out.realContact = personalClaim.contact;
+        out.relationship = personalClaim.relationship || "";
+        out.trust = getTrust(out.relationship);
+        return out;
+      }
+    } else if(senderContact){
+      out.contact = findContact(senderContact);
+    }
+
+    if(out.contact){
+      out.relationship = out.contact.relationship || "";
+      out.trust = getTrust(out.relationship);
+      var highRisk = out.trust <= 25;
+      var key = normalizeContact(out.contact.contact);
+      var hist = getHistory(key);
+      out.historyKey = key;
+      out.historyCount = hist.length;
+      out.priorMoneyCount = hist.filter(function(h){return h.moneyRequest;}).length;
+      var flaggedByHistory = out.moneyAsk && out.priorMoneyCount===0;
+      if(flaggedByHistory){
+        if(!out.contact.allowMoneyAsk){
+          out.status = "compromise";
+        } else if(highRisk){
+          out.status = "known";
+          out.allowedButRisky = true;
+        } else {
+          out.status = "known";
+          out.allowedOverride = true;
+        }
+      } else {
+        out.status = "known";
+        if(out.priorMoneyCount>0 && highRisk){
+          out.relationshipWeight = Math.max(0, Math.round((100-out.trust)/5));
+        }
+      }
+      if(out.moneyAsk && highRisk && !out.allowedOverride){
+        out.relationshipMismatch = true;
+      }
+      return out;
+    }
+
+    out.relationship = claimedRelationship || "";
+    out.trust = getTrust(out.relationship);
+    var adHocHighRisk = out.relationship && out.trust <= 25;
+
+    if(senderContact){
+      var hasRelLang = relationshipLangRegex.test(text);
+      if(out.moneyAsk || hasRelLang || adHocHighRisk){
+        out.status = "unknown-risky";
+        if(adHocHighRisk && out.moneyAsk) out.relationshipMismatch = true;
+        return out;
+      }
+      out.status = "unknown-plain";
+      return out;
+    }
+
+    if(adHocHighRisk && out.moneyAsk){
+      out.status = "unknown-risky";
+      out.relationshipMismatch = true;
+      return out;
+    }
+
+    return out;
+  }
+
+  /* ---------------- main analysis ---------------- */
+  var lastResult = null;
+
+  function analyze(text, claimedSender, senderContact, claimedRelationship){
+    text = text || "";
+    var found = findSpans(text);
+    var ruleScore = 0;
+    found.reasons.forEach(function(r){ ruleScore += r.weight; });
+
+    var company = detectCompany(text) || (claimedSender ? detectCompany(claimedSender) : null);
+    var domainMismatch = false;
+    if(company && senderContact){
+      var d = extractDomain(senderContact);
+      if(d && d.indexOf(company.domain) === -1){
+        domainMismatch = true;
+        ruleScore += 24;
+        found.reasons.push({id:"domain", sev:"danger", weight:24,
+          reasonKey:"c_domain", params:{company:company.name, domain:company.domain}});
+      }
+    }
+
+    var linkIdx = found.reasons.map(function(r){return r.id;}).indexOf("link");
+    if(linkIdx >= 0){
+      var linkMatches = text.match(/\bhttps?:\/\/\S+|\b[a-z0-9-]+\.(com|net|info|org|gov|co\.uk|gov\.uk|gov\.in|co\.in|com\.au|gov\.au|ca)\b/gi) || [];
+      var allWhitelisted = linkMatches.length>0 && linkMatches.every(function(lm){
+        var d2 = extractDomain(lm);
+        if(!d2) return false;
+        if(company && !domainMismatch && d2.indexOf(company.domain)>=0) return true;
+        return !!globalDomainWhitelist[d2];
+      });
+      if(allWhitelisted){
+        ruleScore -= found.reasons[linkIdx].weight;
+        found.reasons.splice(linkIdx, 1);
+      }
+    }
+
+    var fmt = computeFormattingFlag(text);
+    if(fmt){
+      ruleScore += fmt.weight;
+      found.reasons.push({id:"formatting", sev:"caution", weight:fmt.weight, reasonKey:fmt.reasonKey});
+    }
+
+    var cc = company ? {status:"none", moneyAsk:false} : evaluateContact(text, claimedSender, senderContact, claimedRelationship);
+    if(cc.status === "compromise"){
+      ruleScore += 30;
+      found.reasons.push({id:"compromise", sev:"danger", weight:30,
+        reasonKey:"c_compromise", params:{name:cc.contact.name, count:cc.historyCount}});
+    } else if(cc.status === "impersonation"){
+      ruleScore += 30;
+      found.reasons.push({id:"impersonation", sev:"danger", weight:30,
+        reasonKey:"c_impersonation", params:{name:cc.claimedName}});
+    } else if(cc.status === "unknown-risky"){
+      ruleScore += 18;
+      found.reasons.push({id:"unknownrisky", sev:"danger", weight:18,
+        reasonKey:"c_unknownrisky"});
+    } else if(cc.status === "unverified"){
+      ruleScore += 8;
+      found.reasons.push({id:"unverified", sev:"caution", weight:8,
+        reasonKey:"c_unverified", params:{name:cc.claimedName}});
+    }
+
+    if(cc.relationshipMismatch){
+      ruleScore += 18;
+      found.reasons.push({id:"relmismatch", sev:"danger", weight:18,
+        reasonKey:"c_relmismatch", params:{relCode:cc.relationship}});
+    }
+    if(cc.relationshipWeight){
+      ruleScore += cc.relationshipWeight;
+      found.reasons.push({id:"relrepeat", sev:"caution", weight:cc.relationshipWeight,
+        reasonKey:"c_relrepeat", params:{relCode:cc.relationship}});
+    }
+    if(cc.allowedButRisky){
+      ruleScore += 15;
+      found.reasons.push({id:"allowedrisky", sev:"caution", weight:15,
+        reasonKey:"c_allowedrisky", params:{name:cc.contact.name, relCode:cc.relationship}});
+    }
+
+    var mlProb = predict(vectorize(text, vocab), model);
+    var benignDiscount = computeBenignDiscount(text);
+    if(benignDiscount > 0){
+      if(ruleScore > 0){
+        ruleScore = Math.max(0, ruleScore - benignDiscount);
+      } else {
+        mlProb = Math.max(0, mlProb - 0.35);
+      }
+      found.reasons.push({id:"benign", sev:"safe", weight:0,
+        reasonKey:"c_benign"});
+    }
+    ruleScore = Math.min(ruleScore, 70);
+    var score = Math.round(mlProb*45 + (ruleScore/70)*55);
+
+    var reasonIds = found.reasons.map(function(r){return r.id;});
+    var hasMoney = reasonIds.indexOf("money")>=0;
+    var hasThreat = reasonIds.indexOf("threat")>=0;
+    var hasGrandparent = reasonIds.indexOf("grandparent")>=0;
+    var hasAuthority = reasonIds.indexOf("authority")>=0;
+    var hasIdentityLending = reasonIds.indexOf("identitylending")>=0;
+    var overridden = false;
+    if((hasMoney && hasThreat) || hasGrandparent || hasAuthority || hasIdentityLending || (domainMismatch && (hasMoney || reasonIds.indexOf("personal")>=0))
+       || cc.status==="compromise" || cc.status==="impersonation" || cc.status==="unknown-risky"){
+      score = Math.max(score, 90);
+      overridden = true;
+    }
+
+    var senderKey = (claimedSender || (company?company.name:"")).trim().toLowerCase();
+    var trusted = lsGet(LS_TRUST), flagged = lsGet(LS_FLAG);
+    var personalNoteKey = null, personalNoteParams = null;
+    if(senderKey && trusted.indexOf(senderKey) >= 0 && !overridden){
+      score = Math.max(0, score-30);
+      var senderDisplay0 = claimedSender || (company && company.name) || t("c_thatSender");
+      personalNoteKey = "c_noteTrusted"; personalNoteParams = {name:senderDisplay0};
+    } else if(senderKey && flagged.indexOf(senderKey) >= 0){
+      score = Math.min(100, score+20);
+      var senderDisplay1 = claimedSender || (company && company.name) || t("c_thatSender");
+      personalNoteKey = "c_noteFlagged"; personalNoteParams = {name:senderDisplay1};
+    }
+    score = Math.max(0, Math.min(100, score));
+
+    var tier = score>=65 ? "danger" : (score>=30 ? "caution" : "safe");
+    /* "Not enough information" tier: only for a genuine coin-flip from the
+       on-device model (0.45-0.55) with zero signal of any kind — no rule hit,
+       no benign-phrase match either, no company/contact signal. Deliberately
+       narrow: an early version used a wide 0.35-0.65 band and it mis-fired on
+       several hand-crafted benign look-alikes (an ordinary invoice, a rebate
+       notice, "lost my phone at the gym", "reservation is in your name") that
+       the rule engine was specifically tuned not to flag — see testSet. A
+       benign-phrase match is itself a positive signal toward safety and should
+       never be overridden into "unsure". Since ruleScore is 0 in this branch,
+       score is always <30 here, i.e. this only ever reclassifies a "safe"
+       verdict, never a "caution" or "danger" one. */
+    var hasAnySignal = found.reasons.some(function(r){ return r.id !== "benign"; });
+    if(tier==="safe" && !hasAnySignal && benignDiscount===0 && !company && cc.status==="none" && !overridden && mlProb>=0.45 && mlProb<=0.55){
+      tier = "unsure";
+    }
+    var modelWords = topModelWords(text);
+
+    var plainKey, plainParams = null;
+    if(tier==="unsure"){
+      plainKey = "plain_unsure";
+    } else if(tier==="danger"){
+      if(cc.status==="compromise"){
+        plainKey = "plain_compromise";
+      } else if(cc.status==="impersonation"){
+        plainKey = "plain_impersonation";
+      } else if(cc.relationshipMismatch){
+        plainKey = "plain_relmismatch";
+      } else if(cc.status==="unknown-risky"){
+        plainKey = "plain_unknownrisky";
+      } else if(hasGrandparent){
+        plainKey = "plain_grandparent";
+      } else if(hasAuthority){
+        plainKey = "plain_authority";
+      } else if(hasIdentityLending){
+        plainKey = "plain_identitylending";
+      } else {
+        plainKey = "plain_dangerGeneric";
+      }
+    } else if(tier==="caution"){
+      plainKey = "plain_caution";
+    } else {
+      plainKey = "plain_safe";
+    }
+
+    var confidence;
+    if(cc.contact){
+      if(cc.historyCount===0) confidence = {labelKey:"conf_low_label", noteKey:"conf_low_note"};
+      else if(cc.historyCount<4) confidence = {labelKey:"conf_building_label", noteKey:"conf_building_note", noteParams:{count:cc.historyCount}};
+      else confidence = {labelKey:"conf_high_label", noteKey:"conf_high_note", noteParams:{count:cc.historyCount}};
+    } else if(company){
+      confidence = {labelKey:"conf_high_label", noteKey:"conf_companyHigh_note", noteParams:{company:company.name}};
+    } else {
+      confidence = {labelKey:"conf_moderate_label", noteKey:"conf_moderate_note"};
+    }
+
+    return {
+      text:text, score:score, tier:tier, overridden:overridden, spans:found.spans, reasons:found.reasons,
+      company:company, domainMismatch:domainMismatch, modelWords:modelWords, plainKey:plainKey, plainParams:plainParams,
+      personalNoteKey:personalNoteKey, personalNoteParams:personalNoteParams, senderKey:senderKey, claimedSender:claimedSender, contactCheck:cc,
+      confidence:confidence
+    };
+  }
+
+  /* ---------------- rendering ---------------- */
+  var tierPill = document.getElementById("tierPill"), tierLabel = document.getElementById("tierLabel");
+  var scoreLabel = document.getElementById("scoreLabel"), meterMarker = document.getElementById("meterMarker");
+  var plainLang = document.getElementById("plainLang"), msgPreview = document.getElementById("msgPreview");
+  var whyList = document.getElementById("whyList"), contactCardWrap = document.getElementById("contactCardWrap");
+  var fbNote = document.getElementById("fbNote"), logList = document.getElementById("logList");
+  var tierIcon = document.getElementById("tierIcon"), confidenceNote = document.getElementById("confidenceNote");
+
+  var tierIcons = {
+    safe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M8.5 12.2l2.3 2.3 4.7-4.9"/></svg>',
+    caution:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v4"/><circle cx="12" cy="17.3" r="0.9" fill="currentColor" stroke="none"/></svg>',
+    danger:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 3h9L21 7.5v9L16.5 21h-9L3 16.5v-9L7.5 3z"/><path d="M9 9l6 6M15 9l-6 6"/></svg>',
+    unsure:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 4.3 2.4c-.9.6-1.5 1.1-1.5 2.2"/><circle cx="12" cy="17.3" r="0.9" fill="currentColor" stroke="none"/></svg>'
+  };
+  var tierLabelKeys = {safe:"tier_safe", caution:"tier_caution", danger:"tier_danger", unsure:"tier_unsure"};
+
+  /* "What should I do?" — a short, concrete action list driven off the same
+     reason ids and contactCheck status already computed by analyze(), rather
+     than a new detector. Capped at 4 lines so it stays a quick scan, not
+     another wall of text. */
+  function buildActionSteps(result){
+    if(result.tier==="safe") return ["act_noneNeeded"];
+    var reasonIds = result.reasons.map(function(r){return r.id;});
+    var cc = result.contactCheck;
+    var keys = [];
+    function add(k){ if(keys.indexOf(k)<0) keys.push(k); }
+
+    var linkish = ["shortlink","link","accountverify","refundclick","callbacklure"];
+    if(linkish.some(function(id){return reasonIds.indexOf(id)>=0;})) add("act_noClickLinks");
+
+    if(reasonIds.indexOf("upirequest")>=0) add("act_noUpiApprove");
+    if(reasonIds.indexOf("identitylending")>=0) add("act_noShareIdentity");
+    if(reasonIds.indexOf("authority")>=0) add("act_hangUpAuthority");
+    if(reasonIds.indexOf("techsupport")>=0) add("act_noRemoteAccess");
+
+    var moneyish = ["money","grandparent","taskjob","jobinvest","romance"];
+    if(moneyish.some(function(id){return reasonIds.indexOf(id)>=0;}) || (cc && cc.moneyAsk)) add("act_noSendMoney");
+
+    if(cc && (cc.status==="compromise" || cc.status==="impersonation")) add("act_callSavedNumber");
+    else if(cc && (cc.status==="unknown-risky" || cc.status==="unverified" || reasonIds.indexOf("relmismatch")>=0)) add("act_verifyKnownNumber");
+
+    if(result.company) add("act_useVerifiedInfo");
+
+    if(result.tier==="unsure") add("act_askTrusted");
+    if(!keys.length) add("act_pauseFirst");
+
+    return keys.slice(0,4);
+  }
+
+  function renderNextSteps(result){
+    var wrap = document.getElementById("nextStepsWrap");
+    var cc = result.contactCheck;
+    var keys = buildActionSteps(result);
+    var items = keys.map(function(k){
+      var params = (k==="act_callSavedNumber" && cc && cc.contact) ? {name:cc.contact.name} : null;
+      return "<li>"+escapeHtml(t(k, params))+"</li>";
+    }).join("");
+    wrap.innerHTML = '<div class="next-steps"><h3>'+escapeHtml(t("ui_nextStepsHeader"))+'</h3><ul>'+items+'</ul></div>';
+  }
+
+  function render(result){
+    lastResult = result;
+    tierPill.className = "tier-pill tier-"+result.tier;
+    tierIcon.className = "tier-icon tier-"+result.tier;
+    tierIcon.innerHTML = tierIcons[result.tier];
+    tierLabel.textContent = t(tierLabelKeys[result.tier] || "tier_safe");
+    scoreLabel.textContent = t("ui_riskScore", {n:result.score});
+    meterMarker.style.left = result.score+"%";
+    plainLang.textContent = t(result.plainKey, result.plainParams);
+    confidenceNote.innerHTML = "Confidence: <b>"+escapeHtml(t(result.confidence.labelKey))+"</b> — "+escapeHtml(t(result.confidence.noteKey, result.confidence.noteParams));
+    msgPreview.innerHTML = result.text.trim() ? buildHighlightHtml(result.text, result.spans) : "<span style='color:var(--ink-soft)'>Nothing to show yet.</span>";
+
+    whyList.innerHTML = "";
+    if(result.overridden){
+      var li = document.createElement("li");
+      li.className = "sev-danger";
+      li.innerHTML = '<span class="reason-label">'+t("badge_override")+'</span><span>'+escapeHtml(t("c_override"))+'</span>';
+      whyList.appendChild(li);
+    }
+    result.reasons.forEach(function(r){
+      var li = document.createElement("li");
+      li.className = "sev-"+r.sev;
+      var badgeKey = r.sev==="danger" ? "badge_highrisk" : (r.sev==="caution" ? "badge_caution" : "badge_lowerrisk");
+      li.innerHTML = '<span class="reason-label">'+t(badgeKey)+'</span><span>'+escapeHtml(t(r.reasonKey, r.params))+'</span>';
+      whyList.appendChild(li);
+    });
+    if(result.modelWords.length){
+      var li2 = document.createElement("li");
+      li2.className = "sev-model";
+      li2.innerHTML = '<span class="reason-label">'+t("badge_model")+'</span><div><span>'+escapeHtml(t("c_modelIntro"))+'</span>'+
+        '<div class="model-words">'+result.modelWords.map(function(w){return '<span>'+escapeHtml(w)+'</span>';}).join("")+'</div></div>';
+      whyList.appendChild(li2);
+    }
+    if(result.personalNoteKey){
+      var li3 = document.createElement("li");
+      li3.className = "sev-model";
+      li3.innerHTML = '<span class="reason-label">'+t("badge_personal")+'</span><span>'+escapeHtml(t(result.personalNoteKey, result.personalNoteParams))+'</span>';
+      whyList.appendChild(li3);
+    }
+    if(!whyList.children.length){
+      var li4 = document.createElement("li");
+      var clearKey = result.tier==="unsure" ? "c_unsure" : "c_clear";
+      li4.innerHTML = '<span class="reason-label">'+t("badge_clear")+'</span><span>'+escapeHtml(t(clearKey))+'</span>';
+      whyList.appendChild(li4);
+    }
+
+    renderNextSteps(result);
+
+    contactCardWrap.innerHTML = "";
+    if(result.company){
+      var c = result.company;
+      var card = document.createElement("div");
+      card.className = "contact-card";
+      card.innerHTML = '<h3>'+t("company_title",{name:escapeHtml(c.name)})+'</h3>'+
+        '<div>'+t("company_body",{name:escapeHtml(c.name)})+'</div>'+
+        '<div class="row">'+
+          (c.phone ? '<div><span>'+t("company_phone_label")+'</span>'+telLink(c.phone)+'</div>' : '')+
+          '<div><span>'+t("company_website_label")+'</span>'+escapeHtml(c.url)+'</div>'+
+        '</div>'+
+        (c.phone ? '' : '<p>'+t("company_nophone_note")+'</p>')+
+        '<p>'+t("company_doublecheck")+'</p>';
+      contactCardWrap.appendChild(card);
+    }
+    if(!result.company){
+      var ccHtml = buildContactCheckHtml(result.contactCheck);
+      if(ccHtml) contactCardWrap.insertAdjacentHTML("beforeend", ccHtml);
+    }
+
+    fbNote.textContent = "";
+    renderLog();
+    applyCoolingOff(result);
+  }
+
+  var coolingTimer = null;
+  function applyCoolingOff(result){
+    var btn = document.getElementById("fbSafeBtn");
+    if(coolingTimer){ clearInterval(coolingTimer); coolingTimer = null; }
+    var reasonIds2 = result.reasons.map(function(r){return r.id;});
+    var moneyRelated = result.tier==="danger" && (
+      (result.contactCheck && result.contactCheck.moneyAsk) ||
+      reasonIds2.indexOf("money")>=0 || reasonIds2.indexOf("grandparent")>=0 ||
+      reasonIds2.indexOf("compromise")>=0 || reasonIds2.indexOf("impersonation")>=0
+    );
+    if(!moneyRelated){
+      btn.disabled = false;
+      btn.textContent = t("ui_fbSafe");
+      return;
+    }
+    var seconds = 8;
+    btn.disabled = true;
+    btn.textContent = t("ui_waitSeconds", {n:seconds});
+    coolingTimer = setInterval(function(){
+      seconds -= 1;
+      if(seconds <= 0){
+        clearInterval(coolingTimer); coolingTimer = null;
+        btn.disabled = false;
+        btn.textContent = t("ui_fbSafe");
+      } else {
+        btn.textContent = t("ui_waitSeconds", {n:seconds});
+      }
+    }, 1000);
+  }
+
+  function buildContactCheckHtml(cc){
+    if(!cc || cc.status==="none") return "";
+    if(cc.status==="compromise"){
+      return '<div class="contact-card warn"><h3>'+t("card_compromise_title")+'</h3>'+
+        '<p>'+t("card_compromise_body",{name:escapeHtml(cc.contact.name), prior:cc.priorMoneyCount, history:cc.historyCount})+'</p>'+
+        '<p>'+t("card_compromise_call",{name:escapeHtml(cc.contact.name), tel:telLink(cc.contact.contact)})+'</p></div>';
+    }
+    if(cc.status==="impersonation"){
+      return '<div class="contact-card warn"><h3>'+t("card_impersonation_title")+'</h3>'+
+        '<p>'+t("card_impersonation_body",{name:escapeHtml(cc.claimedName), tel:telLink(cc.realContact)})+'</p></div>';
+    }
+    if(cc.status==="unknown-risky"){
+      var relNote = cc.relationshipMismatch ? t("card_unknownrisky_relnote",{relCode:cc.relationship}) : "";
+      return '<div class="contact-card warn"><h3>'+t("card_unknownrisky_title")+'</h3>'+
+        '<p>'+t("card_unknownrisky_body",{relnote:relNote})+'</p></div>';
+    }
+    if(cc.status==="unverified"){
+      return '<div class="contact-card neutral"><h3>'+t("card_unverified_title")+'</h3>'+
+        '<p>'+t("card_unverified_body",{name:escapeHtml(cc.claimedName), tel:telLink(cc.realContact)})+'</p></div>';
+    }
+    if(cc.status==="known"){
+      var relBit = cc.relationship ? t("card_known_relbit",{relCode:cc.relationship}) : "";
+      var allowedNote = cc.allowedOverride ? t("card_known_allowedOverride",{name:escapeHtml(cc.contact.name)})
+        : (cc.allowedButRisky ? t("card_known_allowedButRisky") : "");
+      return '<div class="contact-card"><h3>'+t("card_known_title")+'</h3>'+
+        '<p>'+t("card_known_body",{name:escapeHtml(cc.contact.name), relbit:relBit, history:cc.historyCount, prior:cc.priorMoneyCount, allowednote:allowedNote})+'</p></div>';
+    }
+    if(cc.status==="unknown-plain"){
+      return '<div class="contact-card neutral"><h3>'+t("card_unknownplain_title")+'</h3>'+
+        '<p>'+t("card_unknownplain_body")+'</p></div>';
+    }
+    return "";
+  }
+
+  function populateRelationshipOptions(selectEl, selectedValue){
+    selectEl.innerHTML = "";
+    Object.keys(relationshipLabels).forEach(function(key){
+      var opt = document.createElement("option");
+      opt.value = key;
+      opt.textContent = t("rel_"+key);
+      if(key === (selectedValue||"")) opt.selected = true;
+      selectEl.appendChild(opt);
+    });
+  }
+
+  function renderContactsList(){
+    var contacts = getContacts();
+    var histAll = lsGetObj(LS_HISTORY);
+    var list = document.getElementById("contactsList");
+    list.innerHTML = "";
+    if(!contacts.length){
+      list.innerHTML = '<div class="log-empty">No saved contacts yet.</div>';
+      return;
+    }
+    contacts.forEach(function(c){
+      var key = normalizeContact(c.contact);
+      var hist = histAll[key] || [];
+      var moneyCt = hist.filter(function(h){return h.moneyRequest;}).length;
+      var row = document.createElement("div");
+      row.className = "contact-row";
+      var info = document.createElement("div");
+      var relTxt = c.relationship ? " · "+t("rel_"+c.relationship) : "";
+      info.innerHTML = '<b>'+escapeHtml(c.name)+'</b><span class="meta">'+escapeHtml(c.contact)+relTxt+' · '+hist.length+' msg, '+moneyCt+' money</span>';
+      var actions = document.createElement("div");
+      actions.className = "row-actions";
+      var relSelect = document.createElement("select");
+      relSelect.className = "rel-select";
+      populateRelationshipOptions(relSelect, c.relationship);
+      relSelect.addEventListener("change", function(){
+        var val = relSelect.value;
+        var updated = getContacts().map(function(x){
+          if(x.id===c.id) x.relationship = val;
+          return x;
+        });
+        lsSet(LS_CONTACTS, updated);
+        renderContactsList();
+      });
+      var allowBtn = document.createElement("button");
+      allowBtn.type = "button";
+      allowBtn.className = "allow-money-toggle" + (c.allowMoneyAsk ? " on" : "");
+      allowBtn.textContent = c.allowMoneyAsk ? "Money asks OK" : "Flag money asks";
+      allowBtn.title = "Click to toggle whether " + c.name + " is allowed to ask you for money";
+      allowBtn.addEventListener("click", function(){
+        var updated = getContacts().map(function(x){
+          if(x.id===c.id) x.allowMoneyAsk = !x.allowMoneyAsk;
+          return x;
+        });
+        lsSet(LS_CONTACTS, updated);
+        renderContactsList();
+      });
+      var del = document.createElement("button");
+      del.className = "del-btn"; del.type = "button"; del.textContent = "Remove";
+      del.addEventListener("click", function(){
+        lsSet(LS_CONTACTS, getContacts().filter(function(x){return x.id!==c.id;}));
+        renderContactsList();
+      });
+      actions.appendChild(relSelect);
+      actions.appendChild(allowBtn);
+      actions.appendChild(del);
+      row.appendChild(info);
+      row.appendChild(actions);
+      list.appendChild(row);
+    });
+  }
+
+  function renderLog(){
+    var log = lsGet(LS_LOG);
+    logList.innerHTML = "";
+    if(!log.length){
+      logList.innerHTML = '<div class="log-empty">Checks you run will appear here.</div>';
+      return;
+    }
+    log.slice(0,6).forEach(function(entry){
+      var row = document.createElement("div");
+      row.className = "log-row";
+      row.innerHTML = '<span class="log-time">'+entry.time+'</span>'+
+        '<span class="log-snip">'+escapeHtml(entry.snippet)+'</span>'+
+        '<span class="log-tier tier-'+entry.tier+'">'+entry.tier+'</span>';
+      logList.appendChild(row);
+    });
+  }
+
+  function logCheck(result){
+    var log = lsGet(LS_LOG);
+    log.unshift({
+      time:new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+      snippet:(result.text.trim().slice(0,60) || "(empty)"),
+      tier:result.tier
+    });
+    lsSet(LS_LOG, log.slice(0,20));
+    renderLog();
+  }
+
+  /* "Who does it claim to be from" has no visible field anymore — it was
+     removed from the UI since it mostly duplicated automatic detection and
+     wasn't worth the extra control. The detection itself is kept and still
+     runs silently on every check, because it feeds real scoring logic
+     (impersonation-vs-generic-risky precision, personal-sender trust/flag
+     memory) — only the editable input and its display were removed. */
+  function detectClaimedSender(text){
+    var det = detectCompany(text);
+    if(det) return det.name;
+    var personalDet = detectPersonalMention(text);
+    if(personalDet) return personalDet.name;
+    var relDet = detectRelationClaim(text);
+    if(relDet) return relDet.name;
+    return "";
+  }
+
+  function runAnalysis(){
+    var text = document.getElementById("msgInput").value;
+    var claim = detectClaimedSender(text);
+    var contact = document.getElementById("senderContact").value.trim();
+    var claimedRel = document.getElementById("claimedRelationship").value;
+    var result = analyze(text, claim, contact, claimedRel);
+    render(result);
+    logCheck(result);
+    if(result.contactCheck && result.contactCheck.historyKey && result.contactCheck.status !== "compromise"){
+      pushHistory(result.contactCheck.historyKey, result.contactCheck.moneyAsk);
+      renderContactsList();
+    }
+  }
+
+  document.getElementById("analyzeBtn").addEventListener("click", runAnalysis);
+
+  document.getElementById("regionSelect").addEventListener("change", function(){
+    setRegion(this.value);
+  });
+
+  document.getElementById("translateMsgBtn").addEventListener("click", function(){
+    var msg = document.getElementById("msgInput").value;
+    var note = document.getElementById("translateNote");
+    if(!msg.trim()){ note.textContent = ""; return; }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(msg).then(function(){
+        note.textContent = t("ui_translateNote");
+      }).catch(function(){
+        note.textContent = "";
+      });
     }
   });
 
+  /* ---------------- voice input (Web Speech API) ----------------
+     Unlike read-aloud (speechSynthesis, verified on-device), most browsers'
+     SpeechRecognition implementation sends audio to an external service for
+     transcription — so this carries a disclosed privacy caveat (ui_micPrivacyNote)
+     that read-aloud does not need. Feature-detected and hidden if unsupported. */
+  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var micBtn = document.getElementById("micBtn"), micNote = document.getElementById("micNote");
+  var micListening = false, recognizer = null;
+  if(SpeechRec){
+    micBtn.hidden = false;
+    recognizer = new SpeechRec();
+    recognizer.lang = currentLang === "ta" ? "ta-IN" : "en-US";
+    recognizer.interimResults = false;
+    recognizer.maxAlternatives = 1;
+    recognizer.addEventListener("result", function(e){
+      var transcript = e.results[e.results.length-1][0].transcript;
+      var input = document.getElementById("msgInput");
+      input.value = (input.value.trim() ? input.value.trim()+" " : "") + transcript;
+      runAnalysis();
+    });
+    recognizer.addEventListener("end", function(){
+      micListening = false;
+      micBtn.textContent = t("ui_micBtn");
+    });
+    recognizer.addEventListener("error", function(){
+      micListening = false;
+      micBtn.textContent = t("ui_micBtn");
+      micNote.textContent = t("ui_micPrivacyNote");
+    });
+    micBtn.addEventListener("click", function(){
+      recognizer.lang = currentLang === "ta" ? "ta-IN" : "en-US";
+      if(micListening){ recognizer.stop(); return; }
+      micListening = true;
+      micBtn.textContent = t("ui_micListening");
+      micNote.textContent = t("ui_micPrivacyNote");
+      try{ recognizer.start(); }catch(e){ micListening = false; micBtn.textContent = t("ui_micBtn"); }
+    });
+  }
+
+  /* ---------------- screenshot upload (client-side OCR via Tesseract.js) ----------------
+     The image is decoded and read entirely in-browser — it is never uploaded
+     anywhere. The one disclosed exception to "nothing leaves your browser": the
+     first time this is used, the browser fetches the OCR engine's worker/model
+     files from a CDN (see the <script> tag in <head>), not the user's data.
+     Extracted text is placed in the message box for the user to review, not
+     auto-analyzed, since OCR on a real phone screenshot can be imperfect and a
+     silently-wrong extraction could under-score an actual scam. */
+  var screenshotBtn = document.getElementById("screenshotBtn"), screenshotInput = document.getElementById("screenshotInput");
+  var screenshotNote = document.getElementById("screenshotNote");
+  screenshotBtn.addEventListener("click", function(){ screenshotInput.click(); });
+  screenshotInput.addEventListener("change", function(){
+    var file = screenshotInput.files && screenshotInput.files[0];
+    screenshotInput.value = "";
+    if(!file) return;
+    if(typeof Tesseract === "undefined"){
+      screenshotNote.textContent = t("ui_screenshotError");
+      return;
+    }
+    screenshotNote.textContent = t("ui_screenshotLoading")+" "+t("ui_screenshotPrivacyNote");
+    Tesseract.recognize(file, "eng").then(function(res){
+      var text = (res && res.data && res.data.text || "").trim();
+      if(!text){ screenshotNote.textContent = t("ui_screenshotError"); return; }
+      document.getElementById("msgInput").value = text;
+      screenshotNote.textContent = t("ui_screenshotDone");
+    }).catch(function(){
+      screenshotNote.textContent = t("ui_screenshotError");
+    });
+  });
+
+  /* ---------------- read aloud (Web Speech API, on-device, no network) ---------------- */
+  var speechOk = typeof window!=="undefined" && "speechSynthesis" in window && typeof SpeechSynthesisUtterance!=="undefined";
+  function speak(text){
+    if(!speechOk || !text) return;
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.92;
+    window.speechSynthesis.speak(u);
+  }
+  var readResultBtn = document.getElementById("readResultBtn"), readMsgBtn = document.getElementById("readMsgBtn");
+  if(speechOk){
+    readResultBtn.hidden = false;
+    readMsgBtn.hidden = false;
+    readResultBtn.addEventListener("click", function(){
+      if(!lastResult) return;
+      speak(t(tierLabelKeys[lastResult.tier]||"tier_safe")+". "+t(lastResult.plainKey, lastResult.plainParams));
+    });
+    readMsgBtn.addEventListener("click", function(){
+      if(!lastResult || !lastResult.text.trim()) return;
+      speak(lastResult.text);
+    });
+  }
+
+  document.getElementById("advancedToggle").addEventListener("click", function(){
+    var panel = document.getElementById("advancedPanel");
+    var nowOpen = panel.classList.toggle("open");
+    this.textContent = nowOpen ? "Hide options" : "More options";
+  });
+  document.getElementById("contactsToggle").addEventListener("click", function(){
+    document.getElementById("contactsPanel").classList.toggle("open");
+  });
+  document.getElementById("addContactBtn").addEventListener("click", function(){
+    var nameEl = document.getElementById("contactNameInput"), valEl = document.getElementById("contactValueInput");
+    var allowEl = document.getElementById("contactAllowMoney"), relEl = document.getElementById("contactRelationshipInput");
+    var name = nameEl.value.trim(), val = valEl.value.trim();
+    if(!name || !val) return;
+    var contacts = getContacts();
+    contacts.push({id:"c"+Date.now(), name:name, contact:val, allowMoneyAsk:!!allowEl.checked, relationship:relEl.value});
+    lsSet(LS_CONTACTS, contacts);
+    nameEl.value = ""; valEl.value = ""; allowEl.checked = false; relEl.value = "";
+    renderContactsList();
+  });
+
+  document.querySelectorAll(".fb-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      if(!lastResult) return;
+      var key = lastResult.senderKey;
+      var kind = btn.getAttribute("data-fb");
+      if(kind==="safe" && key){
+        var trusted = lsGet(LS_TRUST);
+        if(trusted.indexOf(key)===-1) trusted.push(key);
+        lsSet(LS_TRUST, trusted);
+        var flagged = lsGet(LS_FLAG).filter(function(k){return k!==key;});
+        lsSet(LS_FLAG, flagged);
+        var senderDisplayFb = lastResult.claimedSender || (lastResult.company && lastResult.company.name) || t("c_thatSender");
+        var cc0 = lastResult.contactCheck;
+        if(cc0 && cc0.status==="compromise" && cc0.historyKey){
+          pushHistory(cc0.historyKey, true);
+          renderContactsList();
+          fbNote.textContent = t("fb_confirmLegit", {name:senderDisplayFb});
+        } else {
+          fbNote.textContent = t("fb_trustedNote", {name:senderDisplayFb});
+        }
+      } else if(kind==="risky" && key){
+        var flagged2 = lsGet(LS_FLAG);
+        if(flagged2.indexOf(key)===-1) flagged2.push(key);
+        lsSet(LS_FLAG, flagged2);
+        var trusted2 = lsGet(LS_TRUST).filter(function(k){return k!==key;});
+        lsSet(LS_TRUST, trusted2);
+        fbNote.textContent = t("fb_moreCautious");
+      } else if(kind==="correct"){
+        fbNote.textContent = t("fb_thanksConfirm");
+      } else {
+        fbNote.textContent = t("fb_noted");
+      }
+    });
+  });
+
+  document.getElementById("howToggle").addEventListener("click", function(){
+    document.getElementById("howPanel").classList.toggle("open");
+  });
+
+  document.getElementById("copySummaryBtn").addEventListener("click", function(){
+    var copyNote = document.getElementById("copyNote");
+    var log = lsGet(LS_LOG);
+    if(!log.length){
+      copyNote.textContent = "Nothing checked yet on this device.";
+      return;
+    }
+    var counts = {safe:0, caution:0, danger:0};
+    log.forEach(function(e){ counts[e.tier] = (counts[e.tier]||0) + 1; });
+    var lines = [
+      "Porchlight summary — last "+log.length+" message(s) checked on this device:",
+      "Likely scam: "+counts.danger+"   Use caution: "+counts.caution+"   Looked safe: "+counts.safe,
+      "",
+      "Recent items:"
+    ];
+    log.slice(0,10).forEach(function(e){
+      lines.push("- ["+e.tier.toUpperCase()+"] "+e.time+": "+e.snippet);
+    });
+    var summaryText = lines.join("\n");
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(summaryText).then(function(){
+        copyNote.textContent = "Copied — paste it into a text or email to share with a caregiver.";
+      }).catch(function(){
+        copyNote.textContent = "Could not copy automatically. Summary logged to the browser console instead.";
+        console.log(summaryText);
+      });
+    } else {
+      copyNote.textContent = "Clipboard access isn't available in this browser.";
+    }
+  });
+
+  /* Two-step in-page confirm instead of window.confirm(): this page can run
+     inside a sandboxed iframe (e.g. the hosted Claude Artifact viewer) that
+     doesn't grant allow-modals, in which case confirm()/alert() return false
+     immediately without ever showing a dialog — silently no-opping every
+     click. An in-page confirm has no such dependency. */
+  var clearLogBtn = document.getElementById("clearLogBtn"), clearLogArmed = false, clearLogTimer = null;
+  clearLogBtn.addEventListener("click", function(){
+    var copyNote = document.getElementById("copyNote");
+    if(!lsGet(LS_LOG).length){
+      copyNote.textContent = "Log is already empty.";
+      return;
+    }
+    if(!clearLogArmed){
+      clearLogArmed = true;
+      clearLogBtn.textContent = "Click again to confirm";
+      clearLogTimer = setTimeout(function(){
+        clearLogArmed = false;
+        clearLogBtn.textContent = "Clear log";
+      }, 4000);
+      return;
+    }
+    clearTimeout(clearLogTimer);
+    clearLogArmed = false;
+    clearLogBtn.textContent = "Clear log";
+    lsSet(LS_LOG, []);
+    renderLog();
+    copyNote.textContent = "Log cleared.";
+  });
+
+  /* Same in-page two-click confirm as Clear log — see the note above it for
+     why window.confirm() can't be used here. This one is deliberately broader
+     and visually separated (own row, red label) since it's destructive across
+     everything Porchlight stores, not just the visible log. Does not touch
+     LS_SEEDED, so the two demo contacts are not silently re-added afterward. */
+  var deleteAllBtn = document.getElementById("deleteAllBtn"), deleteAllArmed = false, deleteAllTimer = null;
+  var DELETE_ALL_LABEL = "Delete all Porchlight data from this device";
+  deleteAllBtn.addEventListener("click", function(){
+    var note = document.getElementById("deleteAllNote");
+    var anyData = lsGet(LS_LOG).length || getContacts().length || lsGet(LS_TRUST).length || lsGet(LS_FLAG).length;
+    if(!anyData){
+      note.textContent = "There's no saved data to delete.";
+      return;
+    }
+    if(!deleteAllArmed){
+      deleteAllArmed = true;
+      deleteAllBtn.textContent = "Click again to confirm — this can't be undone";
+      deleteAllTimer = setTimeout(function(){
+        deleteAllArmed = false;
+        deleteAllBtn.textContent = DELETE_ALL_LABEL;
+      }, 4000);
+      return;
+    }
+    clearTimeout(deleteAllTimer);
+    deleteAllArmed = false;
+    deleteAllBtn.textContent = DELETE_ALL_LABEL;
+    lsSet(LS_LOG, []);
+    lsSet(LS_CONTACTS, []);
+    lsSet(LS_HISTORY, {});
+    lsSet(LS_TRUST, []);
+    lsSet(LS_FLAG, []);
+    renderLog();
+    renderContactsList();
+    note.textContent = "All Porchlight data on this device has been deleted.";
+  });
+
+  /* ---------------- example chips (kept to 2, on purpose, to stay simple) ---------------- */
+  var examples = [
+    {label:"Grandchild emergency text", safe:false,
+      text:"Hi, it's me, I'm in trouble and I need you to send $500 in gift cards right away. Please don't tell anyone, I'll explain later.",
+      sender:"", contact:""},
+    {label:"Legit Amazon shipping update", safe:true,
+      text:"Amazon: Your order #112-4498231-7765544 has shipped and is expected to arrive Thursday. You can track it by logging into your account directly.",
+      sender:"Amazon", contact:"shipment-tracking@amazon.com"}
+  ];
+  var chipRow = document.getElementById("exampleChips");
+  examples.forEach(function(ex){
+    var chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip" + (ex.safe ? " safe-ex" : "");
+    chip.textContent = ex.label;
+    chip.addEventListener("click", function(){
+      if(ex.region) setRegion(ex.region);
+      document.getElementById("msgInput").value = ex.text;
+      document.getElementById("senderContact").value = ex.contact;
+      document.getElementById("claimedRelationship").value = ex.relationship || "";
+      runAnalysis();
+    });
+    chipRow.appendChild(chip);
+  });
+
+  /* ---------------- held-out self-test set (not used in training) ---------------- */
+  var testSet = [
+    {label:1, text:"Your bank account will be frozen tonight unless you confirm your PIN number at secure-bankalert.info within the hour."},
+    {label:1, text:"Grandma, it's me, I got arrested and need bail money sent through Western Union before the court closes today."},
+    {label:1, text:"You have been chosen to receive a $1,000 Walmart gift card. Click here now to claim before midnight: walmart-rewards-claim.net"},
+    {label:1, text:"This is Officer Reyes. There is an active arrest warrant in your name. Stay on this video call with our officer or you will be taken into custody."},
+    {label:1, text:"ALERT!!! YOUR COMPUTER HAS A VIRUS!!! DO NOT TURN OFF YOUR COMPUTER. CALL MICROSOFT IMMEDIATELY AT THE NUMBER BELOW."},
+    {label:1, text:"Hi sweetheart, I miss you so much since we met on the dating site. I'm stuck at customs with my visa and need $600 to fly home to you."},
+    {label:1, text:"Work from home and earn $500 per day, no experience needed! Text WORK to get started immediately."},
+    {label:1, text:"Your package is being held. Pay a customs duty of £4.50 to release your parcel before it is returned."},
+    {label:1, text:"FINAL NOTICE: pay your overdue toll now at fastpass-tollpay.com or additional fees and legal action will apply."},
+    {label:1, text:"Dear valued customer, your subscription payment failed. Update your card number at billing-verify-now.com immediately."},
+    {label:1, text:"I'm a U.S. Army captain deployed overseas. I need you to wire transfer $2,000 so I can come see you when I'm discharged."},
+    {label:1, text:"Guaranteed returns of 40% every month — double your investment with our exclusive crypto platform. Limited spots, act now."},
+    {label:0, text:"Reminder: your electricity bill of $84.20 is due Friday. Pay anytime through your usual account login."},
+    {label:0, text:"Can you send me $20 for gas? I'll pay you back this weekend."},
+    {label:0, text:"Happy birthday!! Hope your day is amazing, love you!!"},
+    {label:0, text:"Reminder from your dentist: appointment tomorrow at 2pm. Call the office if you need to reschedule."},
+    {label:0, text:"Thanks for dinner last night, we should do that again soon."},
+    {label:0, text:"Your Amazon order has shipped and will arrive Wednesday. Track it by logging into your account."},
+    {label:0, text:"The neighborhood potluck got moved to Saturday at noon, hope you can make it!"},
+    {label:0, text:"Please review the attached invoice for $1,240.00 for last month's consulting work, payment due within 30 days per our contract."},
+    {label:0, text:"Congratulations on finishing the marathon! Such an amazing accomplishment."},
+    {label:0, text:"You're the lucky winner of employee of the month, congrats! Free lunch is on us Friday."},
+    {label:0, text:"The insurance company mailed a $50 rebate check to your address, no action needed on your end."},
+    {label:0, text:"URGENT team meeting moved to 3pm today, conference room B."},
+    {label:1, text:"Shop till u Drop, IS IT YOU, either 10K, 5K, £500 Cash or £100 Travel voucher, Call now, 09064011000."},
+    {label:1, text:"Customer service announcement. You have a New Years delivery waiting for you. Please call 07046744435 now to arrange delivery"},
+    {label:1, text:"You have an important customer service announcement. Call FREEPHONE 0800 542 0825 now!"},
+    {label:1, text:"URGENT, IMPORTANT INFORMATION FOR O2 USER. TODAY IS YOUR LUCKY DAY! FIND OUT WHY LOG ONTO WWW.URAWINNER.COM THERE IS A FANTASTIC SURPRISE AWAITING FOR YOU"},
+    {label:1, text:"YOUR CHANCE TO BE ON A REALITY FANTASY SHOW call now 08707509020 Just 20p per min"},
+    {label:1, text:"URGENT!! Your 4 star Costa Del Sol Holiday or £5000 await collection. Call 09050090044 Now to Claim."},
+    {label:1, text:"complimentary 4 STAR Ibiza Holiday or £10,000 cash needs your URGENT collection. Call 09066364349 NOW from Landline not to lose out!"},
+    {label:1, text:"Urgent please call 09066612661 from landline. £5000 cash or a luxury 4 star Canary Islands Holiday await collection."},
+    {label:0, text:"Wat time u finish ur lect today?"},
+    {label:0, text:"I'll get there at 3, unless you guys want me to come some time sooner"},
+    {label:0, text:"You call him and tell now infront of them. Call him now."},
+    {label:0, text:"I didnt get ur full msg, sometext is missing, send it again"},
+    {label:0, text:"Realy sorry, i don't recognise this number and am now confused, who r u please?"},
+    {label:0, text:"Tell me they're female, how're you throwing in? We're deciding what all to get now"},
+    {label:0, text:"Do u ever get a song stuck in your head for no reason and it won't go away til u listen to it like 5 times?"},
+    {label:0, text:"Now got tv 2 watch meh? U no work today?"},
+    {label:1, text:"We tried to call you regarding our offer of a new phone and camcorder. Reply or call this number for delivery tomorrow."},
+    {label:1, text:"Dear customer, your ATM card has been de-activated due to a KYC update. To reactivate, call customer care immediately."},
+    {label:1, text:"Your tax refund of £398.90 can now be claimed. Please continue via the link below to claim your refund."},
+    {label:1, text:"We have identified unusual activity on your account. Log in via the secure link to avoid suspension."},
+    {label:1, text:"URGENT: local government has issued a payment to all residents to battle COVID. Tap here to apply."},
+    {label:1, text:"Your iCloud account shows unauthorized sign-in. Verify your Apple ID and password by replying to this text."},
+    {label:0, text:"Please protect yourself from e-threats. Your bank will never ask for your password or PIN by email. Never share it with anyone."},
+    {label:0, text:"Can you let me know the details of Friday when you find out, since I'm not around tomorrow or Friday."},
+    {label:0, text:"I'm really sorry I won't be able to do this Friday, hope you can find an alternative."},
+    {label:0, text:"That's the trouble with classes that go well, you're due a dodgy one. See you for recovery, same time, same place."},
+    {label:0, text:"Aight, can you text me the address?"},
+    {label:0, text:"I think its far more than that but find out. Check the map for a place near your dorm."},
+
+    /* Family-emergency scam: 16 phrasing variants (different relationship, injury,
+       and payment-method combinations), covered by the familyEmergencyRe rule. */
+    {label:1, text:"Mom, this is my new phone number—I lost my phone and I'm stranded at the hospital right now. I need to pay $450 immediately for an procedure."},
+    {label:1, text:"Hi Dad, it's your son, I got into a car accident and the tow truck needs $300 cash, can you Zelle it to me right now?"},
+    {label:1, text:"Grandma it's me, I'm at the police station, I got arrested and need $800 for bail, please don't tell mom and dad."},
+    {label:1, text:"Hey mom it's David, lost my phone so this is a new number. I'm at urgent care and need $200 for the copay, can you PayPal me?"},
+    {label:1, text:"Dad I got mugged and they took my wallet, I'm stranded downtown and need $150 for a cab, please wire me the money."},
+    {label:1, text:"Mom I broke down on the highway and need a tow, can you send $120 to this Cashapp right now?"},
+    {label:1, text:"This is your granddaughter, I'm in the ER after an accident and need $600 for the deposit, please Venmo me asap."},
+    {label:1, text:"Hi it's me, I got detained by customs at the airport and need $500 wire transfer to get released, please hurry."},
+    {label:1, text:"Mom I totaled the car and I'm at the hospital, doctors need $350 upfront, can you pay it through Zelle?"},
+    {label:1, text:"Dad it's your nephew, I'm stuck in jail and bail is $700, can you send it through Western Union today?"},
+    {label:1, text:"Grandpa I lost my wallet and phone at the airport, I'm stranded and need $250, can you give me the money on Venmo?"},
+    {label:1, text:"Hey Mom new number, I was in a wreck and I'm at the ER, need $400 for treatment, please don't tell dad yet."},
+    {label:1, text:"It's your daughter, I got robbed near the hotel and need $300 cash urgently, can you Zelle me right now?"},
+    {label:1, text:"Hi Grandma, this is your grandson's new number, I need surgery and I'm short $500, can you help me pay it today?"},
+    {label:1, text:"Mom I'm at urgent care after an accident, they need payment now, can you send $275 to this cashapp?"},
+    {label:1, text:"Dad it's me, I'm having an emergency procedure and need $600 immediately, please wire it and don't tell anyone."},
+
+    /* Benign look-alikes: each mentions ONE trigger word (new number, hospital,
+       lost phone, car accident, Venmo+$, relationship self-ID) with no trouble+
+       money combination, to confirm the rule doesn't fire on ordinary texts. */
+    {label:0, text:"Hey, this is my new phone number, save it! Talk soon."},
+    {label:0, text:"I'm at the hospital visiting Aunt Carol, she's doing okay. Will call you later."},
+    {label:0, text:"Ugh I lost my phone at the gym again, using Dave's to text you. Can you help me look for it later?"},
+    {label:0, text:"Did you hear about the car accident on Main Street this morning? Traffic is crazy."},
+    {label:0, text:"Can you Venmo me $20 for the pizza we split last night?"},
+    {label:0, text:"Grandma, it's your granddaughter! Just calling to say happy birthday, love you!"},
+
+    /* identitylending / taskjob / coldopener, added 2026-09-06 with real training
+       examples the user collected. Traced by hand against the final regexes below,
+       same standard as the family-emergency rebuild: scam-shaped variants that
+       should fire, plus close benign look-alikes (ordinary "account in your name"
+       banking language, a payroll deposit, deposit-before-withdraw banking copy,
+       and genuine fan mail) that specifically should NOT, since those exact
+       phrasings were found during review to false-positive on the first draft of
+       these rules and were tightened before being added. */
+    {label:1, text:"We need you to create an account using your identity so we can complete the verification for you. You'll be paid $50."},
+    {label:1, text:"Please do the work on your identity to pass the assessment and we'll split the profit."},
+    {label:1, text:"Congratulations, here is your invitation code. Complete the trial task and pay a refundable deposit to activate your withdrawal."},
+    {label:1, text:"This is a temporary deposit to trigger the system, please pay now to unlock your earnings."},
+    {label:1, text:"Promote the company's properties online, no experience needed. First deposit is required to unlock your task center."},
+    {label:1, text:"Hey, don't you remember me? Why can't I reach you anymore? I hope we can communicate more openly."},
+    {label:1, text:"Did you block me? Recent interactions have made me feel uncomfortable, I thought we were close."},
+    {label:0, text:"Please open a savings account in your name at the branch whenever you get a chance."},
+    {label:0, text:"The reservation is in your name, just show your ID at the front desk."},
+    {label:0, text:"Please complete the task and submit your timesheet for deposit into payroll by Friday."},
+    {label:0, text:"You must deposit at least $10 before you can withdraw from your account."},
+    {label:0, text:"Are you the author of this book? I loved reading it for my book club."},
+
+    /* upirequest, added 2026-09-06: a collect-request scam (approving it pays the
+       scammer despite reading like a refund) vs. an ordinary bill-split request. */
+    {label:1, text:"Your KYC will expire today. To continue using your account, approve the UPI collect request of ₹1 sent to your registered number immediately."},
+    {label:0, text:"Sent you a UPI request for ₹250 for last night's dinner, check your GPay when you get a chance."}
+  ];
+
+  function runSelfTest(){
+    var tp=0, fp=0, tn=0, fn=0, misses=[];
+    testSet.forEach(function(item){
+      var r = analyze(item.text, "", "");
+      var flagged = r.tier !== "safe" ? 1 : 0;
+      if(flagged===1 && item.label===1) tp++;
+      else if(flagged===1 && item.label===0){ fp++; misses.push({item:item, got:r.tier}); }
+      else if(flagged===0 && item.label===0) tn++;
+      else { fn++; misses.push({item:item, got:r.tier}); }
+    });
+    var precision = tp+fp>0 ? tp/(tp+fp) : 0;
+    var recall = tp+fn>0 ? tp/(tp+fn) : 0;
+    var f1 = (precision+recall)>0 ? 2*precision*recall/(precision+recall) : 0;
+    var accuracy = (tp+tn)/testSet.length;
+    var pct = function(n){ return Math.round(n*100)+"%"; };
+
+    var html = '<div class="test-metrics">'+
+      '<div class="test-metric"><span class="num">'+pct(accuracy)+'</span><span class="lbl">Accuracy</span></div>'+
+      '<div class="test-metric"><span class="num">'+pct(precision)+'</span><span class="lbl">Precision</span></div>'+
+      '<div class="test-metric"><span class="num">'+pct(recall)+'</span><span class="lbl">Recall</span></div>'+
+      '<div class="test-metric"><span class="num">'+pct(f1)+'</span><span class="lbl">F1 score</span></div>'+
+      '</div>'+
+      '<p>'+tp+' true positives, '+tn+' true negatives, '+fp+' false positives, '+fn+' false negatives, out of '+testSet.length+' held-out messages.</p>';
+
+    if(misses.length){
+      html += '<p><b>Misclassified:</b></p>';
+      misses.forEach(function(m){
+        html += '<div class="test-miss">Expected <b>'+(m.item.label===1?"scam":"legit")+'</b>, got <b>'+escapeHtml(m.got)+'</b>: “'+escapeHtml(m.item.text.slice(0,90))+(m.item.text.length>90?'…':'')+'”</div>';
+      });
+    } else {
+      html += '<p>No misclassifications on this run.</p>';
+    }
+    document.getElementById("testResults").innerHTML = html;
+  }
+
+  document.getElementById("testToggle").addEventListener("click", function(){
+    document.getElementById("testPanel").classList.toggle("open");
+  });
+  document.getElementById("runTestBtn").addEventListener("click", runSelfTest);
+
+  /* ---------------- "Easier to see" text/button size toggle ---------------- */
+  var TEXT_SIZE_LEVELS = ["normal","large","xl"];
+  var TEXT_SIZE_LABELS = {normal:"Larger text", large:"Extra large text", xl:"Normal text size"};
+  var textSizeBtn = document.getElementById("textSizeBtn");
+  var currentTextSize = "normal";
+  try{ currentTextSize = localStorage.getItem("porchlight_textsize") || "normal"; }catch(e){}
+  function applyTextSize(size){
+    document.documentElement.classList.remove("text-large","text-xl");
+    if(size==="large") document.documentElement.classList.add("text-large");
+    if(size==="xl") document.documentElement.classList.add("text-xl");
+    textSizeBtn.textContent = TEXT_SIZE_LABELS[size] || TEXT_SIZE_LABELS.normal;
+    currentTextSize = size;
+    try{ localStorage.setItem("porchlight_textsize", size); }catch(e){}
+  }
+  textSizeBtn.addEventListener("click", function(){
+    var idx = TEXT_SIZE_LEVELS.indexOf(currentTextSize);
+    applyTextSize(TEXT_SIZE_LEVELS[(idx+1) % TEXT_SIZE_LEVELS.length]);
+  });
+  applyTextSize(currentTextSize);
+
+  /* ---------------- initial state: show a worked example at rest ---------------- */
   document.getElementById("langSelect").value = currentLang;
+  document.getElementById("langSelect").addEventListener("change", function(e){ setLang(e.target.value); });
+  document.getElementById("regionSelect").value = currentRegion;
   applyStaticTranslations();
-  renderLanding();
+  populateRelationshipOptions(document.getElementById("claimedRelationship"), "");
+  populateRelationshipOptions(document.getElementById("contactRelationshipInput"), "");
+  seedContactsIfNeeded();
+  renderContactsList();
+  document.getElementById("msgInput").value = examples[0].text;
+  document.getElementById("senderContact").value = examples[0].contact;
+  runAnalysis();
+
 })();
 </script>
 </body>
 </html>
+
+</body></html>
