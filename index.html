@@ -342,7 +342,6 @@
       </select>
       <button class="howbtn" id="textSizeBtn" type="button">Larger text</button>
       <button class="howbtn" id="howToggle" type="button">How this works</button>
-      <button class="howbtn" id="testToggle" type="button">Model accuracy</button>
     </div>
   </div>
   <p class="hint" id="taPartialNote" style="margin:-18px 0 18px;"></p>
@@ -359,14 +358,47 @@
     <p>Porchlight is English-only for now, on purpose — the detection features are still being actively worked on, and adding other languages back in is a deliberate later step rather than something done alongside every change.</p>
   </div>
 
-  <div class="howpanel" id="testPanel">
-    <p>This runs the full rule-and-model pipeline against 88 messages that were <b>not</b> used to train the model, and reports how it did. 60 are edge cases I wrote by hand to probe specific behaviors — including 22 built specifically to stress-test the family-emergency scam rule against different relationships, injuries, and payment methods, plus close benign look-alikes that should <b>not</b> trigger it; 28 are real messages from the public SMS Spam Collection dataset (including its "smishing" category), held out from the training data added below. Treat the numbers as a sanity check on the approach, not a scientific accuracy claim.</p>
-    <p>"Flagged" means the message came back as Caution or Danger; "Not flagged" means Safe. Precision is: of the messages Porchlight flagged, how many really were scams. Recall is: of the real scams in the set, how many Porchlight caught.</p>
-    <button class="howbtn" id="runTestBtn" type="button">Run self-test</button>
-    <div id="testResults"></div>
-  </div>
-
   <div class="grid">
+    <section class="panel" id="verdictPanel">
+      <h2 data-i18n="ui_resultHeader">Result</h2>
+      <div class="verdict-head">
+        <div class="tier-big">
+          <span class="tier-icon" id="tierIcon"></span>
+          <div class="tier-pill" id="tierPill"><span class="dot"></span><span id="tierLabel">—</span></div>
+        </div>
+        <div class="score-mono" id="scoreLabel">risk score —/100</div>
+      </div>
+      <div class="meter">
+        <div class="meter-track"></div>
+        <div class="meter-marker" id="meterMarker" style="left:0%"></div>
+      </div>
+      <div class="meter-labels"><span data-i18n="meter_safe">Safe</span><span data-i18n="meter_caution">Use caution</span><span data-i18n="meter_danger">Likely scam</span></div>
+      <div class="confidence-note" id="confidenceNote"></div>
+
+      <div id="nextStepsWrap"></div>
+
+      <div class="plain-lang" id="plainLang"></div>
+      <div class="speak-row">
+        <button type="button" class="speak-btn" id="readResultBtn" hidden>🔊 <span data-i18n="ui_readResultBtn">Read result aloud</span></button>
+        <button type="button" class="speak-btn" id="readMsgBtn" hidden>🔊 <span data-i18n="ui_readMsgBtn">Read message aloud</span></button>
+      </div>
+
+      <div class="msg-preview" id="msgPreview"></div>
+
+      <h2 data-i18n="ui_whyHeader">Why we flagged this</h2>
+      <ul class="why-list" id="whyList"></ul>
+
+      <div id="contactCardWrap"></div>
+
+      <div class="feedback-row" id="feedbackRow">
+        <span class="q" data-i18n="ui_fbQuestion">Did we get this right?</span>
+        <button class="fb-btn" data-fb="correct" type="button" data-i18n="ui_fbCorrect">Looks right</button>
+        <button class="fb-btn" id="fbSafeBtn" data-fb="safe" type="button" data-i18n="ui_fbSafe">Actually safe</button>
+        <button class="fb-btn" data-fb="risky" type="button" data-i18n="ui_fbRisky">Actually risky</button>
+        <span class="fb-note" id="fbNote"></span>
+      </div>
+    </section>
+
     <section class="panel">
       <h2 data-i18n="ui_checkHeader">Check a message</h2>
 
@@ -413,13 +445,22 @@
         <div class="contacts-panel" id="contactsPanel">
           <div id="contactsList"></div>
           <div class="contact-add">
-            <input type="text" id="contactNameInput" placeholder="Name (e.g. Mom)">
-            <input type="text" id="contactValueInput" placeholder="Phone or email">
-            <select id="contactRelationshipInput"></select>
-            <button type="button" id="addContactBtn">Add</button>
+            <select id="contactCodeInput" style="flex:none; width:auto;">
+              <option value="+1">🇺🇸 +1</option>
+              <option value="+44">🇬🇧 +44</option>
+              <option value="+91">🇮🇳 +91</option>
+              <option value="+1">🇨🇦 +1</option>
+              <option value="+61">🇦🇺 +61</option>
+              <option value="">Other / email</option>
+            </select>
+            <input type="text" id="contactValueInput" placeholder="Phone number or email">
           </div>
+          <div class="contact-add">
+            <input type="text" id="contactNameInput" placeholder="Saved as (e.g. Mom)">
+            <select id="contactRelationshipInput"></select>
+          </div>
+          <div class="manage-row" style="justify-content:flex-end;"><button type="button" id="addContactBtn">Add</button></div>
           <label class="allow-money-row"><input type="checkbox" id="contactAllowMoney"> Allowed to ask me for money through apps like Venmo or Zelle</label>
-          <p class="hint">Porchlight compares the sender field above against this list, so it can tell a message from a real saved number apart from a stranger's number claiming to be that person — and it remembers whether that person has ever asked you for money before. The relationship you set changes how much a money request from them is scrutinized: closer relationships get more benefit of the doubt after the first ask, while newer or romantic contacts stay flagged more persistently, since that's the pattern romance scams actually use.</p>
         </div>
       </div>
 
@@ -437,46 +478,6 @@
           <span class="hint" id="deleteAllNote" style="margin:0;"></span>
           <button type="button" class="manage-link danger-link" id="deleteAllBtn">Delete all Porchlight data from this device</button>
         </div>
-      </div>
-    </section>
-
-    <section class="panel" id="verdictPanel">
-      <h2 data-i18n="ui_resultHeader">Result</h2>
-      <div class="verdict-head">
-        <div class="tier-big">
-          <span class="tier-icon" id="tierIcon"></span>
-          <div class="tier-pill" id="tierPill"><span class="dot"></span><span id="tierLabel">—</span></div>
-        </div>
-        <div class="score-mono" id="scoreLabel">risk score —/100</div>
-      </div>
-      <div class="meter">
-        <div class="meter-track"></div>
-        <div class="meter-marker" id="meterMarker" style="left:0%"></div>
-      </div>
-      <div class="meter-labels"><span data-i18n="meter_safe">Safe</span><span data-i18n="meter_caution">Use caution</span><span data-i18n="meter_danger">Likely scam</span></div>
-      <div class="confidence-note" id="confidenceNote"></div>
-
-      <div class="plain-lang" id="plainLang"></div>
-      <div class="speak-row">
-        <button type="button" class="speak-btn" id="readResultBtn" hidden>🔊 <span data-i18n="ui_readResultBtn">Read result aloud</span></button>
-        <button type="button" class="speak-btn" id="readMsgBtn" hidden>🔊 <span data-i18n="ui_readMsgBtn">Read message aloud</span></button>
-      </div>
-
-      <div class="msg-preview" id="msgPreview"></div>
-
-      <h2 data-i18n="ui_whyHeader">Why we flagged this</h2>
-      <ul class="why-list" id="whyList"></ul>
-
-      <div id="nextStepsWrap"></div>
-
-      <div id="contactCardWrap"></div>
-
-      <div class="feedback-row" id="feedbackRow">
-        <span class="q" data-i18n="ui_fbQuestion">Did we get this right?</span>
-        <button class="fb-btn" data-fb="correct" type="button" data-i18n="ui_fbCorrect">Looks right</button>
-        <button class="fb-btn" id="fbSafeBtn" data-fb="safe" type="button" data-i18n="ui_fbSafe">Actually safe</button>
-        <button class="fb-btn" data-fb="risky" type="button" data-i18n="ui_fbRisky">Actually risky</button>
-        <span class="fb-note" id="fbNote"></span>
       </div>
     </section>
   </div>
@@ -2102,13 +2103,16 @@
   });
   document.getElementById("addContactBtn").addEventListener("click", function(){
     var nameEl = document.getElementById("contactNameInput"), valEl = document.getElementById("contactValueInput");
+    var codeEl = document.getElementById("contactCodeInput");
     var allowEl = document.getElementById("contactAllowMoney"), relEl = document.getElementById("contactRelationshipInput");
-    var name = nameEl.value.trim(), val = valEl.value.trim();
+    var name = nameEl.value.trim(), val = valEl.value.trim(), code = codeEl.value;
     if(!name || !val) return;
+    var isEmail = val.indexOf("@") !== -1;
+    var finalVal = (!isEmail && code) ? (code + " " + val) : val;
     var contacts = getContacts();
-    contacts.push({id:"c"+Date.now(), name:name, contact:val, allowMoneyAsk:!!allowEl.checked, relationship:relEl.value});
+    contacts.push({id:"c"+Date.now(), name:name, contact:finalVal, allowMoneyAsk:!!allowEl.checked, relationship:relEl.value});
     lsSet(LS_CONTACTS, contacts);
-    nameEl.value = ""; valEl.value = ""; allowEl.checked = false; relEl.value = "";
+    nameEl.value = ""; valEl.value = ""; allowEl.checked = false; relEl.value = ""; codeEl.value = "+1";
     renderContactsList();
   });
 
@@ -2417,11 +2421,6 @@
     }
     document.getElementById("testResults").innerHTML = html;
   }
-
-  document.getElementById("testToggle").addEventListener("click", function(){
-    document.getElementById("testPanel").classList.toggle("open");
-  });
-  document.getElementById("runTestBtn").addEventListener("click", runSelfTest);
 
   /* ---------------- "Easier to see" text/button size toggle ---------------- */
   var TEXT_SIZE_LEVELS = ["normal","large","xl"];
